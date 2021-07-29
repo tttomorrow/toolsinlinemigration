@@ -1,39 +1,51 @@
-# openGauss-tools-onlineMigration
+# OnlineMigration
 
 #### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+OnlineMigration是基于[Debezium](https://debezium.io/)的在线迁移工具，当前只支持Oracle迁移到openGauss。
 
-#### 软件架构
-软件架构说明
+#### 编译
+```
+mvn compile
+```
 
+#### 打包
+```
+mvn package
+```
 
-#### 安装教程
+#### 运行前准备
+启动kafka, debezium
+[安装Debeziun](https://debezium.io/documentation/reference/1.5/install.html)
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+#### 如何运行
+参数说明：
+```
+--write-scn: write scn captured in debezium snapshot mode.
+--schema: the schema want to migrate
+--from-beginning: consume the messages from beginning.
+--consumer-file-path: the application property file
+--help: print the help message
+```
 
-#### 使用说明
+读取做快照时的scn并写入到scn.txt
+```
+java -jar OnlineMigration-1.0-SNAPSHOT.jar --write-scn
+```
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+从topic起始端开始消费
+```
+java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name --from-beginning
+```
 
-#### 参与贡献
+从上次消费的topic偏移量处继续消费
+```
+java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name
+```
 
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
+配置参数可在resources/consummer_setting.properties中修改，或者自己创建新的properties文件并作为命令行参数传递给程序
+```
+java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name --from-beginning --consumer-file-path prop_file_path
+```
 
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+#### 如何结束
+按CTRL+C结束即可。
