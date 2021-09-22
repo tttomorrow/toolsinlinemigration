@@ -22,6 +22,11 @@ public class JDBCExecutor {
             String password = MigrationConfig.getDatabasePassword();
             Class.forName(MigrationConfig.getDriverName());
             connection = DriverManager.getConnection(url, user, password);
+
+            // This is a long time connection, we close session timout here.
+            Statement timeoutStmt = connection.createStatement();
+            timeoutStmt.execute("set session_timeout = 0;");
+            timeoutStmt.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
