@@ -166,7 +166,18 @@ public class DMLProcessor {
                 // We can't set a == null in where clause so we build null string.
                 whereSQL.add(name + " IS NULL");
             } else {
-                whereSQL.add(name + " = ?");
+                String semanticType = columnInfo.getSemanticType();
+                if (semanticType != null && (semanticType.equals(io.debezium.data.VariableScaleDecimal.LOGICAL_NAME) ||
+                    semanticType.equals(org.apache.kafka.connect.data.Decimal.LOGICAL_NAME))) {
+                    // Debezium maps DOUBLE PRECISION, FLOAT[(P)], NUMBER[(P[, *])], REAL etc data type to
+                    // VariableScaleDecimal and Decimal. FLOAT and REAL are not precise data type in openGauss.
+                    // When FLOAT or REAL attributes appears in where clause, we should use SQL like
+                    // "select * from xxx where a::numeric = 1.53" to compare.
+                    // https://debezium.io/documentation/reference/1.5/connectors/oracle.html#oracle-numeric-types
+                    whereSQL.add(name + "::numeric = ?");
+                } else {
+                    whereSQL.add(name + " = ?");
+                }
                 whereColInfos.add(columnInfo);
                 whereColValues.add(colValue);
             }
