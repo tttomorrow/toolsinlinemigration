@@ -13,9 +13,10 @@ mvn compile
 mvn package
 ```
 
+生成的jar包位于**target/**下。
+
 #### 运行前准备
-启动kafka, debezium
-[安装Debeziun](https://debezium.io/documentation/reference/1.5/install.html)
+配置oracle、启动Kafka等运行前准备操作详见instruction目录下的[PREPARATION](instruction/PREPARATION.md)
 
 #### 如何运行
 参数说明：
@@ -42,9 +43,11 @@ java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name --from-beginning
 java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name
 ```
 
-配置参数可在resources/consummer_setting.properties中修改，或者自己创建新的properties文件并作为命令行参数传递给程序
+配置参数可在resources/consummer_setting.properties中修改后重新编译，或者自己创建新的properties文件并作为命令行参数传递给程序
 ```
-java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name --from-beginning --consumer-file-path prop_file_path
+cp src/main/resources/consumer_setting.properties ./my_consumer_setting.properties
+# 修改my_consumer_setting.properties中的相关配置参数，然后启动
+java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name --from-beginning --consumer-file-path my_consumer_setting.properties
 ```
 
 #### 如何结束
