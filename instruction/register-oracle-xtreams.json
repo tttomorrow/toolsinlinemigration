@@ -1,0 +1,20 @@
+{
+    "name": "demo-connector",
+    "config": {
+        "connector.class" : "io.debezium.connector.oracle.OracleConnector",
+        "tasks.max" : "1",
+        "database.server.name" : "server1",
+        "database.hostname" : "10.243.197.140",
+        "database.port" : "1521",
+        "database.user" : "c##dbzuser",
+        "database.password" : "dbz",
+        "database.dbname" : "ORCLCDB",
+        "database.pdb.name" : "ORCLPDB1",
+        "database.out.server.name" : "dbzxout",
+        "database.connection.adapter": "xstream",
+        "database.history.kafka.bootstrap.servers" : "localhost:9092",
+        "database.history.kafka.topic": "schema-changes.server1",
+        "snapshot.mode": "schema_only",
+        "provide.transaction.metadata": "true"
+    }
+}
