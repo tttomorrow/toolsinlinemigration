@@ -11,10 +11,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.gauss.parser.DDLSqlParser;
 
 public class DDLProcessor extends Processor {
     private final ObjectMapper topicMapper = new ObjectMapper();
     private final JDBCExecutor executor = new JDBCExecutor();
+    private final DDLSqlParser ddlSqlParser = new DDLSqlParser();
 
     public DDLProcessor() {
         topicMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -35,7 +37,7 @@ public class DDLProcessor extends Processor {
             return;
         }
 
-        String ddl = value.getPayload().getDdl();
+        String ddl = ddlSqlParser.parse(value);
 
         // We don't do heavy work on DDL and just pass the origin DDL SQL to destination
         // database. We assume some compatibility plugins in destination database may
