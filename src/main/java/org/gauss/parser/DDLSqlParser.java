@@ -4,19 +4,13 @@
 
 package org.gauss.parser;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.gauss.converter.ColumnTypeConverter;
 import org.gauss.jsonstruct.DDLValueStruct;
 import org.gauss.jsonstruct.SourceStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
-import org.gauss.util.JDBCExecutor;
-import org.gauss.util.Processor;
-
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DDLSqlParser{
@@ -36,17 +30,17 @@ public class DDLSqlParser{
             tableChanges.stream().anyMatch(tableChangeStruct -> StringUtils.equals(tableChangeStruct.getType(), TABLE_CREATE));
 
         if (isCreateDDL) {
-            List<String> openGraussCreateSqlList =
-                tableChanges.stream().map(tableChangeStruct -> convertToOpenGraussSql(tableChangeStruct, struct.getPayload()
+            List<String> openGaussCreateSqlList =
+                tableChanges.stream().map(tableChangeStruct -> convertToOpenGaussSql(tableChangeStruct, struct.getPayload()
                     .getSource()))
                     .collect(Collectors.toList());
-            return StringUtils.join(openGraussCreateSqlList, StringUtils.SPACE);
+            return StringUtils.join(openGaussCreateSqlList, StringUtils.SPACE);
         }
 
         return struct.getPayload().getDdl();
     }
 
-    private String convertToOpenGraussSql(TableChangeStruct tableChangeStruct, SourceStruct source) {
+    private String convertToOpenGaussSql(TableChangeStruct tableChangeStruct, SourceStruct source) {
         List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(column -> getColumnSqls(column))
             .collect(Collectors.toList());
 
@@ -118,7 +112,7 @@ public class DDLSqlParser{
     private String getColumnSqls(TableChangeStruct.column column) {
         StringBuilder sb = new StringBuilder();
         sb.append(TAB);
-        sb.append(addQuo(column.getName())).append(StringUtils.SPACE);
+        sb.append(addQuo(ColumnTypeConverter.convertTypeName(column.getName()))).append(StringUtils.SPACE);
         sb.append(column.getTypeName())
             .append(column.getLength() > NumberUtils.INTEGER_ZERO? addBrackets(column.getLength()) : StringUtils.EMPTY)
             .append(StringUtils.SPACE);
