@@ -120,6 +120,7 @@ public class TableChangeStruct {
 
     public static class Table {
         private List<String> primaryKeyColumnNames;
+        private List<ForeignKeyColumns> foreignKeyColumns;
         private List<column> columns;
 
         public List<String> getPrimaryKeyColumnNames() {
@@ -128,6 +129,42 @@ public class TableChangeStruct {
 
         public void setPrimaryKeyColumnNames(List<String> primaryKeyColumnNames) {
             this.primaryKeyColumnNames = primaryKeyColumnNames;
+        }
+
+        public List<ForeignKeyColumns> getForeignKeyColumns() {
+            return foreignKeyColumns;
+        }
+
+        public List<column> getColumns() {
+            return columns;
+        }
+    }
+
+    public static class ForeignKeyColumns {
+        private String pktableSchem;
+        private String pktableName;
+        private String pkColumnName;
+        private String fkColumnName;
+        private String fkName;
+
+        public String getPktableSchem() {
+            return pktableSchem;
+        }
+
+        public String getPktableName() {
+            return pktableName;
+        }
+
+        public String getPkColumnName() {
+            return pkColumnName;
+        }
+
+        public String getFkColumnName() {
+            return fkColumnName;
+        }
+
+        public String getFkName() {
+            return fkName;
         }
     }
 
