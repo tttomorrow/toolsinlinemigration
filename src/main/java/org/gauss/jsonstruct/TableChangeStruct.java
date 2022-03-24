@@ -20,6 +20,8 @@ public class TableChangeStruct {
         private boolean optional;
         private boolean autoIncremented;
         private boolean generated;
+        private List<String> modifyKeys;
+        private String defaultValueExpression;
 
         public String getName() {
             return name;
@@ -116,22 +118,53 @@ public class TableChangeStruct {
         public void setGenerated(boolean generated) {
             this.generated = generated;
         }
+
+        public List<String> getModifyKeys() {
+            return modifyKeys;
+        }
+
+        public void setModifyKeys(List<String> modifyKeys) {
+            this.modifyKeys = modifyKeys;
+        }
+
+        public String getDefaultValueExpression() {
+            return defaultValueExpression;
+        }
+
+        public void setDefaultValueExpression(String defaultValueExpression) {
+            this.defaultValueExpression = defaultValueExpression;
+        }
     }
 
     public static class Table {
         private List<String> primaryKeyColumnNames;
-        private List<ForeignKeyColumns> foreignKeyColumns;
+        private List<PrimaryKeyColumnChange> primaryKeyColumnChanges;
+        private List<IndexColumn> uniqueColumns;
+        private List<CheckColumn> checkColumns;
+        private List<ForeignKeyColumn> foreignKeyColumns;
         private List<column> columns;
 
         public List<String> getPrimaryKeyColumnNames() {
             return primaryKeyColumnNames;
         }
 
+        public List<PrimaryKeyColumnChange> getPrimaryKeyColumnChanges() {
+            return primaryKeyColumnChanges;
+        }
+
         public void setPrimaryKeyColumnNames(List<String> primaryKeyColumnNames) {
             this.primaryKeyColumnNames = primaryKeyColumnNames;
         }
 
-        public List<ForeignKeyColumns> getForeignKeyColumns() {
+        public List<IndexColumn> getUniqueColumns() {
+            return uniqueColumns;
+        }
+
+        public List<CheckColumn> getCheckColumns() {
+            return checkColumns;
+        }
+
+        public List<ForeignKeyColumn> getForeignKeyColumns() {
             return foreignKeyColumns;
         }
 
@@ -140,7 +173,7 @@ public class TableChangeStruct {
         }
     }
 
-    public static class ForeignKeyColumns {
+    public static class ForeignKeyColumn {
         private String pktableSchem;
         private String pktableName;
         private String pkColumnName;
@@ -165,6 +198,45 @@ public class TableChangeStruct {
 
         public String getFkName() {
             return fkName;
+        }
+    }
+
+    public static class IndexColumn {
+        private String indexName;
+        private String columnName;
+
+        public String getIndexName() {
+            return indexName;
+        }
+
+        public String getColumnName() {
+            return columnName;
+        }
+    }
+
+    public static class PrimaryKeyColumnChange {
+        private String action;
+        private String columnName;
+
+        public String getAction() {
+            return action;
+        }
+
+        public String getColumnName() {
+            return columnName;
+        }
+    }
+
+    public static class CheckColumn {
+        private String indexName;
+        private String condition;
+
+        public String getIndexName() {
+            return indexName;
+        }
+
+        public String getCondition() {
+            return condition;
         }
     }
 
