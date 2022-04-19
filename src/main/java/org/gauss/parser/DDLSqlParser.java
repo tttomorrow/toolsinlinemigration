@@ -13,6 +13,7 @@ import org.gauss.jsonstruct.TableChangeStruct;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class DDLSqlParser{
@@ -78,8 +79,7 @@ public class DDLSqlParser{
         List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(column -> getColumnSqls(column))
             .collect(Collectors.toList());
 
-        List<String> primaryKeySqls = tableChangeStruct.getTable().getPrimaryKeyColumnNames().stream()
-            .map(primaryKey -> getPrimaryKeySql(primaryKey)).collect(Collectors.toList());
+        String primaryKeySql = getPrimaryKeySql(tableChangeStruct.getTable().getPrimaryKeyColumnNames());
 
         List<String> foreignKeySqls = tableChangeStruct.getTable().getForeignKeyColumns().stream()
             .map(foreignKeyColumn -> getForeignKeySql(foreignKeyColumn)).collect(Collectors.toList());
@@ -96,8 +96,8 @@ public class DDLSqlParser{
 
         sb.append(StringUtils.join(columnSqls, getColumnJoinStr()));
 
-        sb.append(isNotEmpty(primaryKeySqls)? COMMA : StringUtils.EMPTY);
-        sb.append(StringUtils.join(primaryKeySqls, getColumnJoinStr()));
+        sb.append(StringUtils.isNotEmpty(primaryKeySql)? COMMA : StringUtils.EMPTY);
+        sb.append(primaryKeySql);
 
         sb.append(isNotEmpty(uniqueColumnSqls)? COMMA : StringUtils.EMPTY);
         sb.append(StringUtils.join(uniqueColumnSqls, getColumnJoinStr()));
@@ -254,12 +254,13 @@ public class DDLSqlParser{
         return sb.toString();
     }
 
-    private String getPrimaryKeySql(String primaryKey) {
+    private String getPrimaryKeySql(List<String> primaryKeys) {
+        Set<String> primaryKeySet = primaryKeys.stream().map(primaryKey -> addQuo(primaryKey)).collect(Collectors.toSet());
         StringBuilder sb = new StringBuilder();
         sb.append(StringUtils.LF);
         sb.append(TAB);
         sb.append("PRIMARY KEY ");
-        sb.append(addBrackets(addQuo(primaryKey)));
+        sb.append(addBrackets(StringUtils.join(primaryKeySet,COMMA)));
         sb.append(StringUtils.LF);
         return sb.toString();
     }
