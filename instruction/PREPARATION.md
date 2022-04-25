@@ -44,46 +44,15 @@ SQL>ALTER TABLE customers ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;
 SQL>exit;
 ```
 
-# 编译Debezium
-
-下载Debezium源码（本测试使用tag为1.5.0.Final的代码）
-
-```
-git clone --branch v1.5.0.Final https://github.com/debezium/debezium.git
-```
-
-将代码修改应用到debezium源码上（修改点：一表一主题-->多表一主题）
-
-```
-cp v150_onlyonetopic.patch debezium/
-cd debezium/
-git apply v150_onlyonetopic.patch
-```
-
-编译debezium-connector-oracle
-
-详见[编译指南](https://github.com/debezium/debezium/tree/v1.5.0.Final/debezium-connector-oracle)
-
-简易操作：因编译**debezium-connector-oracle**耗时太长，而代码patch只修改了debezium的**debezium-core**模块，可以从官网下载已编译好的**debezium-connector-oracle**，然后自行编译**debezium-core**替换掉下载包里的该模块。详细操作如下：
+# 下载Debezium
 
 ```
 # 下载解压官网编译好的debezium-connector-oracle
 wget -c https://repo1.maven.org/maven2/io/debezium/debezium-connector-oracle/1.5.0.Final/debezium-connector-oracle-1.5.0.Final-plugin.tar.gz
 tar -zxf debezium-connector-oracle-1.5.0.Final-plugin.tar.gz
-
-cd debezium
-# 编译debeziunm-core模块
-mvn clean package -pl debezium-core -Dquick -DskipTests
-# 如果出现连接安全报错，则使用如下语句编译
-mvn clean package -pl debezium-core -Dquick -DskipTests -Dmaven.wagon.http.ssl.insecure=true -Dmaven.wagon.http.ssl.allowall=true
-
-# 编译生成的debezium-core-1.5.0.Final.jar位于debezium/debezium-core/target
-
-# 替换debezium-core模块
-cp debezium/debezium-core/target/debezium-core-1.5.0.Final.jar debezium-connector-oracle/
 ```
 
-至此，我们获得了修改后的**debezium-connector-oracle**
+至此，我们获得了**debezium-connector-oracle**
 
 # 配置Kafka
 
