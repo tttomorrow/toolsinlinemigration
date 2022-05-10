@@ -15,6 +15,10 @@
         "database.history.kafka.bootstrap.servers" : "localhost:9092",
         "database.history.kafka.topic": "schema-changes.server1",
         "snapshot.mode": "schema_only",
-        "provide.transaction.metadata": "true"
+        "provide.transaction.metadata": "true",
+        "transforms": "route",
+        "transforms.route.type": "org.apache.kafka.connect.transforms.RegexRouter",
+        "transforms.route.regex":"([^.]+)\\.([^.]+)\\.([^.]+)$",
+        "transforms.route.replacement":"$1.$2.ALL_TABLES"
     }
 }
