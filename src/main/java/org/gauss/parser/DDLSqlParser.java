@@ -257,11 +257,13 @@ public class DDLSqlParser{
     private String getPrimaryKeySql(List<String> primaryKeys) {
         Set<String> primaryKeySet = primaryKeys.stream().map(primaryKey -> addQuo(primaryKey)).collect(Collectors.toSet());
         StringBuilder sb = new StringBuilder();
-        sb.append(StringUtils.LF);
-        sb.append(TAB);
-        sb.append("PRIMARY KEY ");
-        sb.append(addBrackets(StringUtils.join(primaryKeySet,COMMA)));
-        sb.append(StringUtils.LF);
+        if (!primaryKeySet.isEmpty()) {
+            sb.append(StringUtils.LF);
+            sb.append(TAB);
+            sb.append("PRIMARY KEY ");
+            sb.append(addBrackets(StringUtils.join(primaryKeySet, COMMA)));
+            sb.append(StringUtils.LF);
+        }
         return sb.toString();
     }
 
