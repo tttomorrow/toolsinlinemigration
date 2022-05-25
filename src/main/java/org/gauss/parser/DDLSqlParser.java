@@ -11,9 +11,12 @@ import org.gauss.jsonstruct.DDLValueStruct;
 import org.gauss.jsonstruct.SourceStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 public class DDLSqlParser{
@@ -182,20 +185,34 @@ public class DDLSqlParser{
         return sb.toString();
     }
     private List<String> primaryKeyColumnChangeSql(List<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChangeColumns, String tableName, String alterTitleSql){
-        return primaryKeyColumnChangeColumns.stream()
-            .map(primaryKeyColumnChangeColumn ->
-                StringUtils.equals(primaryKeyColumnChangeColumn.getAction(), TABLE_PRIMARY_KEY_ADD) ?
-                    getPrimaryKeyAddSqL(primaryKeyColumnChangeColumn.getColumnName(), alterTitleSql) :
-                    getPrimaryKeyDropSqL(tableName, primaryKeyColumnChangeColumn.getColumnName(), alterTitleSql))
-            .collect(Collectors.toList());
+
+        Map<String, List<TableChangeStruct.PrimaryKeyColumnChange>> primaryKeyGroup = primaryKeyColumnChangeColumns.stream()
+            .collect(Collectors.groupingBy(TableChangeStruct.PrimaryKeyColumnChange::getAction));
+
+        List<String> primaryKeySqlList = new ArrayList<>();
+
+        primaryKeyGroup.forEach((action, primaryKeyColumnChanges) -> {
+
+            if (StringUtils.equals(action.toUpperCase(), TABLE_PRIMARY_KEY_ADD)){
+                List<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
+                    .map(primaryKeyColumnChangeColumn -> addQuo(primaryKeyColumnChangeColumn.getColumnName()))
+                    .collect(Collectors.toList());
+                primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames, alterTitleSql));
+            } else {
+                primaryKeySqlList.addAll(primaryKeyColumnChanges.stream().map(
+                    primaryKeyColumnChangeColumn -> getPrimaryKeyDropSqL(tableName,
+                        primaryKeyColumnChangeColumn.getColumnName(), alterTitleSql)).collect(Collectors.toList()));
+            }
+        });
+        return primaryKeySqlList;
     }
 
-    private String getPrimaryKeyAddSqL(String columnName, String alterTitleSql) {
+    private String getPrimaryKeyAddSqL(List<String>  columnNameList, String alterTitleSql) {
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append(TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
-        sb.append("PRIMARY KEY");
-        sb.append(addBrackets(addQuo(columnName)));
+        sb.append("PRIMARY KEY ");
+        sb.append(addBrackets(StringUtils.join(columnNameList, COMMA)));
         return sb.toString();
     }
 
@@ -233,6 +250,21 @@ public class DDLSqlParser{
     }
 
     private String getForeignKeySql(TableChangeStruct.ForeignKeyColumn foreignKeyColumn) {
+
+        String fkColumnNameStr = addQuo(foreignKeyColumn.getFkColumnName());
+        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(COMMA))){
+            fkColumnNameStr =
+                StringUtils.join(Arrays.asList(foreignKeyColumn.getFkColumnName().split(String.valueOf(COMMA))).stream()
+                    .map(fkColumnName -> addQuo(fkColumnName)).collect(Collectors.toList()), String.valueOf(COMMA));
+        }
+
+        String pkColumnNameStr = addQuo(foreignKeyColumn.getPkColumnName());
+        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(COMMA))){
+            pkColumnNameStr =
+                StringUtils.join(Arrays.asList(foreignKeyColumn.getPkColumnName().split(String.valueOf(COMMA))).stream()
+                    .map(pkColumnName -> addQuo(pkColumnName)).collect(Collectors.toList()), String.valueOf(COMMA));
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append(StringUtils.LF);
         sb.append(TAB);
@@ -240,7 +272,7 @@ public class DDLSqlParser{
         sb.append(addQuo(foreignKeyColumn.getFkName())).append(StringUtils.SPACE);
         sb.append("FOREIGN KEY ");
         sb.append(StringUtils.SPACE)
-            .append(addBrackets(addQuo(foreignKeyColumn.getFkColumnName())))
+            .append(addBrackets(fkColumnNameStr))
             .append(StringUtils.SPACE);
         sb.append(StringUtils.LF);
         sb.append(TAB);
@@ -250,7 +282,7 @@ public class DDLSqlParser{
             .append(DOT)
             .append(addQuo(foreignKeyColumn.getPktableName()))
             .append(StringUtils.SPACE)
-            .append(addBrackets(addQuo(foreignKeyColumn.getPkColumnName())));
+            .append(addBrackets(pkColumnNameStr));
         return sb.toString();
     }
 
