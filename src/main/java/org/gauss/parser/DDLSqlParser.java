@@ -201,7 +201,7 @@ public class DDLSqlParser{
             } else {
                 primaryKeySqlList.addAll(primaryKeyColumnChanges.stream().map(
                     primaryKeyColumnChangeColumn -> getPrimaryKeyDropSqL(tableName,
-                        primaryKeyColumnChangeColumn.getColumnName(), alterTitleSql)).collect(Collectors.toList()));
+                        primaryKeyColumnChangeColumn.getCascade(), alterTitleSql)).collect(Collectors.toList()));
             }
         });
         return primaryKeySqlList;
@@ -216,12 +216,15 @@ public class DDLSqlParser{
         return sb.toString();
     }
 
-    private String getPrimaryKeyDropSqL(String tableName, String columnName, String alterTitleSql) {
+    private String getPrimaryKeyDropSqL(String tableName, String cascade, String alterTitleSql) {
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append(TABLE_PRIMARY_KEY_DROP).append(StringUtils.SPACE);
         sb.append("CONSTRAINT ");
         sb.append(addQuo(tableName + "_pkey"));
+        if (StringUtils.isNotEmpty(cascade)) {
+            sb.append(StringUtils.SPACE).append(cascade);
+        }
         return sb.toString();
     }
 

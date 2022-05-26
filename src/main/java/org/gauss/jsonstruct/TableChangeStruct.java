@@ -217,6 +217,7 @@ public class TableChangeStruct {
     public static class PrimaryKeyColumnChange {
         private String action;
         private String columnName;
+        private String cascade;
 
         public String getAction() {
             return action;
@@ -224,6 +225,10 @@ public class TableChangeStruct {
 
         public String getColumnName() {
             return columnName;
+        }
+
+        public String getCascade() {
+            return cascade;
         }
     }
 
