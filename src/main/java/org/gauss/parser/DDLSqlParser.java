@@ -4,6 +4,7 @@
 
 package org.gauss.parser;
 
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.gauss.converter.ColumnTypeConverter;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Collection;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class DDLSqlParser{
 
@@ -69,6 +71,8 @@ public class DDLSqlParser{
         TableChangeStruct.Table table = tableChangeStruct.getTable();
         if (table != null && StringUtils.equals(tableChangeStruct.getType(), TABLE_ALTER)) {
             return (isNotEmpty(table.getPrimaryKeyColumnChanges()))
+                || isNotEmpty(table.getCheckColumns())
+                || isNotEmpty(table.getUniqueColumns())
                 || isNotEmpty(getColumnChanges(table.getColumns()));
         }
         return Boolean.FALSE;
@@ -121,6 +125,15 @@ public class DDLSqlParser{
             return  StringUtils.join(primaryKeyColumnChangeSql(table.getPrimaryKeyColumnChanges(), source.getTable(),
                     getTableAlterTitleSql(source)), SEMICOLON);
         }
+        if (isNotEmpty(table.getUniqueColumns())) {
+            return  StringUtils.join(uniqueColumnChangeSql(table.getUniqueColumns(),
+                getTableAlterTitleSql(source)), SEMICOLON);
+        }
+        if (isNotEmpty(table.getCheckColumns())) {
+            return  StringUtils.join(checkChangeSql(table.getCheckColumns(),
+                getTableAlterTitleSql(source)), SEMICOLON);
+        }
+
         List<TableChangeStruct.column> columnChanges = getColumnChanges(table.getColumns());
         if (isNotEmpty(getColumnChanges(table.getColumns()))) {
             List<String> columnChangeSqls = columnChanges.stream()
@@ -184,6 +197,24 @@ public class DDLSqlParser{
 
         return sb.toString();
     }
+
+    private List<String> checkChangeSql(List<TableChangeStruct.CheckColumn> checkColumns, String alterTitleSql){
+        return checkColumns.stream().map(checkColumn -> getCheckAlterSqL(checkColumn, alterTitleSql)).collect(Collectors.toList());
+    }
+
+    private List<String> uniqueColumnChangeSql(List<TableChangeStruct.IndexColumn> uniqueColumns, String alterTitleSql){
+        List<String> uniqueColumnNames = uniqueColumns.stream()
+            .map(uniqueColumn -> addQuo(uniqueColumn.getColumnName()))
+            .collect(Collectors.toList());
+        Optional<TableChangeStruct.IndexColumn> uniqueColumnIndex =
+            uniqueColumns.stream().filter(uniqueColumn -> StringUtils.isNotEmpty(uniqueColumn.getIndexName()))
+                .findAny();
+        if (uniqueColumnIndex.isPresent()) {
+            return Lists.newArrayList(getUniqueAlterSqL(uniqueColumnNames, alterTitleSql, uniqueColumnIndex.get().getIndexName()));
+        }
+        return Lists.newArrayList();
+    }
+
     private List<String> primaryKeyColumnChangeSql(List<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChangeColumns, String tableName, String alterTitleSql){
 
         Map<String, List<TableChangeStruct.PrimaryKeyColumnChange>> primaryKeyGroup = primaryKeyColumnChangeColumns.stream()
@@ -191,44 +222,91 @@ public class DDLSqlParser{
 
         List<String> primaryKeySqlList = new ArrayList<>();
 
-        primaryKeyGroup.forEach((action, primaryKeyColumnChanges) -> {
+        for (Map.Entry<String, List<TableChangeStruct.PrimaryKeyColumnChange>> entry : primaryKeyGroup.entrySet()) {
+            String action = entry.getKey();
+            List<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChanges = entry.getValue();
+            List<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
+                .map(primaryKeyColumnChangeColumn -> addQuo(primaryKeyColumnChangeColumn.getColumnName()))
+                .collect(Collectors.toList());
+            if (StringUtils.equals(action.toUpperCase(), TABLE_PRIMARY_KEY_ADD)) {
+                Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
+                    primaryKeyColumnChangeColumn -> StringUtils
+                        .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
+                if (primaryKeyColumnChange.isPresent()) {
+                    primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames, alterTitleSql,
+                        primaryKeyColumnChange.get().getConstraintName()));
+                } else {
+                    primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames, alterTitleSql, null));
+                }
 
-            if (StringUtils.equals(action.toUpperCase(), TABLE_PRIMARY_KEY_ADD)){
-                List<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
-                    .map(primaryKeyColumnChangeColumn -> addQuo(primaryKeyColumnChangeColumn.getColumnName()))
-                    .collect(Collectors.toList());
-                primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames, alterTitleSql));
             } else {
                 primaryKeySqlList.addAll(primaryKeyColumnChanges.stream().map(
-                    primaryKeyColumnChangeColumn -> getPrimaryKeyDropSqL(tableName,
-                        primaryKeyColumnChangeColumn.getCascade(), alterTitleSql)).collect(Collectors.toList()));
+                    primaryKeyColumnChangeColumn -> getPrimaryKeyDropSqL(tableName, primaryKeyColumnChangeColumn,
+                        alterTitleSql)).collect(Collectors.toSet()));
+                primaryKeySqlList.addAll(primaryKeyAddColumnNames.stream().map(columnName -> getColumnNullSql(columnName, alterTitleSql)).collect(
+                    Collectors.toSet()));
             }
-        });
+        }
         return primaryKeySqlList;
     }
 
-    private String getPrimaryKeyAddSqL(List<String>  columnNameList, String alterTitleSql) {
+    private String getColumnNullSql(String columnName, String alterTitleSql){
+        StringBuilder sb = new StringBuilder();
+        sb.append(alterTitleSql).append(StringUtils.SPACE);
+        sb.append("ALTER COLUMN ");
+        sb.append(columnName).append(StringUtils.SPACE);
+        sb.append("DROP NOT NULL");
+        return sb.toString();
+    }
+
+    private String getCheckAlterSqL(TableChangeStruct.CheckColumn checkColumn, String alterTitleSql) {
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append(TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
+        sb.append("CONSTRAINT ").append(checkColumn.getIndexName()).append(StringUtils.SPACE);
+        sb.append("CHECK ");
+        sb.append(addBrackets(checkColumn.getCondition()));
+        return sb.toString();
+    }
+    private String getUniqueAlterSqL(List<String>  columnNameList, String alterTitleSql, String constraintName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(alterTitleSql).append(StringUtils.SPACE);
+        sb.append(TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
+        sb.append("CONSTRAINT ").append(constraintName).append(StringUtils.SPACE);
+        sb.append("UNIQUE ");
+        sb.append(addBrackets(StringUtils.join(columnNameList, COMMA)));
+        return sb.toString();
+    }
+
+    private String getPrimaryKeyAddSqL(List<String>  columnNameList, String alterTitleSql, String constraintName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(alterTitleSql).append(StringUtils.SPACE);
+        sb.append(TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
+        if (StringUtils.isNotEmpty(constraintName)) {
+            sb.append("CONSTRAINT ").append(constraintName).append(StringUtils.SPACE);
+        }
         sb.append("PRIMARY KEY ");
         sb.append(addBrackets(StringUtils.join(columnNameList, COMMA)));
         return sb.toString();
     }
 
-    private String getPrimaryKeyDropSqL(String tableName, String cascade, String alterTitleSql) {
+    private String getPrimaryKeyDropSqL(String tableName, TableChangeStruct.PrimaryKeyColumnChange primaryKeyColumnChangeColumn, String alterTitleSql) {
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append(TABLE_PRIMARY_KEY_DROP).append(StringUtils.SPACE);
         sb.append("CONSTRAINT ");
-        sb.append(addQuo(tableName + "_pkey"));
-        if (StringUtils.isNotEmpty(cascade)) {
-            sb.append(StringUtils.SPACE).append(cascade);
+        if (StringUtils.isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())){
+            sb.append(primaryKeyColumnChangeColumn.getConstraintName());
+        } else {
+            sb.append(addQuo(tableName + "_pkey"));
+        }
+        if (StringUtils.isNotEmpty(primaryKeyColumnChangeColumn.getCascade())) {
+            sb.append(StringUtils.SPACE).append(primaryKeyColumnChangeColumn.getCascade());
         }
         return sb.toString();
     }
 
-    private String getUniqueSql(TableChangeStruct.IndexColumn uniqueColumn) {
+    private String  getUniqueSql(TableChangeStruct.IndexColumn uniqueColumn) {
         StringBuilder sb = new StringBuilder();
         sb.append(StringUtils.LF);
         sb.append(TAB);
