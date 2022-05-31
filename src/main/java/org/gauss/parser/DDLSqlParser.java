@@ -86,7 +86,7 @@ public class DDLSqlParser{
         List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(column -> getColumnSqls(column))
             .collect(Collectors.toList());
 
-        String primaryKeySql = getPrimaryKeySql(tableChangeStruct.getTable().getPrimaryKeyColumnNames());
+        String primaryKeySql = getPrimaryKeySql(tableChangeStruct.getTable());
 
         List<String> foreignKeySqls = tableChangeStruct.getTable().getForeignKeyColumns().stream()
             .map(foreignKeyColumn -> getForeignKeySql(foreignKeyColumn)).collect(Collectors.toList());
@@ -367,7 +367,35 @@ public class DDLSqlParser{
         return sb.toString();
     }
 
-    private String getPrimaryKeySql(List<String> primaryKeys) {
+    private String getPrimaryKeySql(TableChangeStruct.Table table){
+        List<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChanges = table.getPrimaryKeyColumnChanges();
+        if (!isEmpty(primaryKeyColumnChanges)){
+            Set<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
+                .map(primaryKeyColumnChangeColumn -> addQuo(primaryKeyColumnChangeColumn.getColumnName()))
+                .collect(Collectors.toSet());
+            Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
+                primaryKeyColumnChangeColumn -> StringUtils
+                    .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
+            if (primaryKeyColumnChange.isPresent() 
+                && StringUtils.equals(primaryKeyColumnChange.get().getAction().toUpperCase(), TABLE_PRIMARY_KEY_ADD)) {
+                return getPrimaryKeyAddByConstraintName(primaryKeyAddColumnNames, primaryKeyColumnChange.get().getConstraintName());
+            }
+        }
+        return getPrimaryKeySqlByNoConstraintName(table.getPrimaryKeyColumnNames());
+        
+    }
+    private String getPrimaryKeyAddByConstraintName(Set<String> columnNameList, String constraintName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(StringUtils.LF);
+        sb.append(TAB);
+        sb.append("CONSTRAINT ").append(constraintName).append(StringUtils.SPACE);
+        sb.append("PRIMARY KEY ");
+        sb.append(addBrackets(StringUtils.join(columnNameList, COMMA)));
+        sb.append(StringUtils.LF);
+        return sb.toString();
+    }
+    
+    private String getPrimaryKeySqlByNoConstraintName(List<String> primaryKeys) {
         Set<String> primaryKeySet = primaryKeys.stream().map(primaryKey -> addQuo(primaryKey)).collect(Collectors.toSet());
         StringBuilder sb = new StringBuilder();
         if (!primaryKeySet.isEmpty()) {
