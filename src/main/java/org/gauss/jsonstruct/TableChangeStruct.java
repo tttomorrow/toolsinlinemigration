@@ -218,6 +218,7 @@ public class TableChangeStruct {
         private String action;
         private String columnName;
         private String cascade;
+        private String  constraintName;
 
         public String getAction() {
             return action;
@@ -229,6 +230,10 @@ public class TableChangeStruct {
 
         public String getCascade() {
             return cascade;
+        }
+
+        public String getConstraintName() {
+            return constraintName;
         }
     }
 

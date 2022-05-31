@@ -12,8 +12,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.gauss.parser.DDLSqlParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DDLProcessor extends Processor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DDLProcessor.class);
     private final ObjectMapper topicMapper = new ObjectMapper();
     private final JDBCExecutor executor = new JDBCExecutor();
     private final DDLSqlParser ddlSqlParser = new DDLSqlParser();
@@ -38,7 +41,7 @@ public class DDLProcessor extends Processor {
         }
 
         String ddl = ddlSqlParser.parse(value);
-
+        LOGGER.info("execute DDL SQl: {}", ddl);
         // We don't do heavy work on DDL and just pass the origin DDL SQL to destination
         // database. We assume some compatibility plugins in destination database may
         // process these DDL SQL.
