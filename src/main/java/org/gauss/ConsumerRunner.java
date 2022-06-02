@@ -6,7 +6,7 @@ package org.gauss;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
-import org.gauss.util.DDLProcessor;
+import org.gauss.util.ddl.DDLProcessor;
 import org.gauss.util.Processor;
 import org.gauss.util.TransactionProcessor;
 

@@ -13,9 +13,11 @@ import org.gauss.parser.ParserContainer;
 
 import io.debezium.data.Envelope;
 
+import org.gauss.util.ddl.DDLCacheController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
@@ -24,13 +26,17 @@ import java.util.Map;
 public class DMLProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DMLProcessor.class);
 
+    private DDLCacheController ddlCacheController = DDLCacheController.getInstance();
     // executor execute SQL
     private final JDBCExecutor executor;
 
-    private final String table;
+    private QuoteCharacter quoteCharacter = QuoteCharacter.DOUBLE_QUOTE;
+    private String tableIdentity;
+    private String table;
     private String insertSQL = null;
     private String updateSQL = null;
     private String deleteSQL = null;
+    private String truncateSQL = null;
 
     private int insertCount = 0;
     private int updateCount = 0;
@@ -50,12 +56,19 @@ public class DMLProcessor {
     public void process(KeyStruct key, DMLValueStruct value) {
         String op = value.getPayload().getOp();
         Envelope.Operation operation = Envelope.Operation.forCode(op);
-
+        Long currentScn = value.getPayload().getSource().getScn();
+        List<String> cacheDDlByScn = ddlCacheController.getCacheDDlByScn(currentScn);
+        if (cacheDDlByScn.size() > 0) {
+            // find ddl need to execute before
+            LOGGER.info("there is {} records ddl need execute before", cacheDDlByScn.size());
+            ddlCacheController.consumeDDL(cacheDDlByScn);
+        }
         // We assume that table struct don't change. This assumption may be changed
         // in the future.
         if (columnInfos.size() == 0) {
             initKeyColumnInfos(key);
             initColumnInfos(value);
+            initTableIdentity(value);
         }
 
         PreparedStatement statement;
@@ -78,6 +91,10 @@ public class DMLProcessor {
                 deleteCount++;
                 LOGGER.info("DELETE SQL in {}, delete count: {}.", table, deleteCount);
                 break;
+            case TRUNCATE:
+                statement = getTruncateStatement(key, value);
+                LOGGER.info("TRUNCATE SQL in {}.", table);
+                break;
             default:
                 // May be truncate. Truncate operation is not used in debezium-connector-oracle.
                 statement = null;
@@ -87,6 +104,25 @@ public class DMLProcessor {
         if (statement != null) {
             executor.executeDML(statement);
         }
+    }
+
+    /**
+     * create truncate statement
+     *
+     * @param key
+     * @param value
+     * @return
+     */
+    private PreparedStatement getTruncateStatement(KeyStruct key, DMLValueStruct value) {
+        if (null == truncateSQL) {
+            initTruncateSQL();
+        }
+        try {
+            return executor.getConnection().prepareStatement(truncateSQL);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void initColumnInfos(DMLValueStruct value) {
@@ -107,6 +143,17 @@ public class DMLProcessor {
                     colField.getField(), colField.getType(), colField.getName(), colField.getParameters());
             columnInfos.add(columnInfo);
         }
+    }
+
+    private void initTableIdentity(DMLValueStruct value) {
+        if (table.toLowerCase().equals(table) || table.toUpperCase().equals(table)) {
+            table = table.toLowerCase();
+        }
+        String schema = value.getPayload().getSource().getSchema();
+        if (schema.toLowerCase().equals(schema) || schema.toUpperCase().equals(schema)) {
+            schema = schema.toLowerCase();
+        }
+        tableIdentity = String.format("%s.%s", quoteCharacter.wrap(schema), quoteCharacter.wrap(table));
     }
 
     private void initKeyColumnInfos(KeyStruct key) {
@@ -133,7 +180,7 @@ public class DMLProcessor {
 
         String columnNamesSQL = String.join(", ", columnNames);
         String columnValuesSQL = String.join(", ", columnValues);
-        insertSQL = String.format(DMLSQL.INSERT_SQL, table, columnNamesSQL, columnValuesSQL);
+        insertSQL = String.format(DMLSQL.INSERT_SQL, tableIdentity, columnNamesSQL, columnValuesSQL);
     }
 
     private void initUpdateSQL() {
@@ -143,11 +190,15 @@ public class DMLProcessor {
             columnNameValues[i] = columnInfos.get(i).getName() + " = ?";
         }
         String nameValues = String.join(", ", columnNameValues);
-        updateSQL = String.format(DMLSQL.UPDATE_SQL, table, nameValues);
+        updateSQL = String.format(DMLSQL.UPDATE_SQL, tableIdentity, nameValues);
     }
 
     private void initDeleteSQL() {
-        deleteSQL = String.format(DMLSQL.DELETE_SQL, table);
+        deleteSQL = String.format(DMLSQL.DELETE_SQL, tableIdentity);
+    }
+
+    private void initTruncateSQL() {
+        truncateSQL = String.format(DMLSQL.TRUNCATE_SQL, tableIdentity);
     }
 
     private String getWhereClause(KeyStruct key, DMLValueStruct value,
