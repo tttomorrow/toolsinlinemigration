@@ -4,6 +4,7 @@
 
 package org.gauss.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.gauss.jsonstruct.DMLValueStruct;
 import org.gauss.jsonstruct.KeyStruct;
 import org.gauss.jsonstruct.SourceStruct;
@@ -132,6 +133,10 @@ public class DMLController {
 
         SourceStruct source = value.getPayload().getSource();
         String recordTxid = source.getTxId();
+        if (StringUtils.isBlank(recordTxid)) {
+            LOGGER.info("This is a record from snapshot,maybe ignore it now");
+            return;
+        }
         if (!recordTxid.equals(txnId)) {
             if (needCacheInQueue) {
                 remainingRecords.add(record);

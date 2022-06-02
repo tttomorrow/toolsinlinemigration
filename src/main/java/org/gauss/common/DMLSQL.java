@@ -12,4 +12,7 @@ public class DMLSQL {
 
     // where clause: where a is null or where a = ?.
     public static final String DELETE_SQL = "DELETE FROM %s WHERE ";
+
+    // truncate table sql
+    public static final String TRUNCATE_SQL = "TRUNCATE TABLE %s";
 }

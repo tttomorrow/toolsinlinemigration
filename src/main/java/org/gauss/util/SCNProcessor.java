@@ -24,9 +24,7 @@ public class SCNProcessor {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        String scn = value.getPayload().getSource().getScn();
-
+        String scn = value.getPayload().getSource().getScn().toString();
         return scn;
     }
 

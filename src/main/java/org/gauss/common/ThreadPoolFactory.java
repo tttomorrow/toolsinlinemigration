@@ -51,8 +51,8 @@ public class ThreadPoolFactory {
         BigDecimal computeTime = new BigDecimal(cpu);
         BigDecimal numberOfCPU = new BigDecimal(Runtime.getRuntime().availableProcessors());
         BigDecimal optimalThreadCount = numberOfCPU.multiply(targetUtilization)
-                .multiply(new BigDecimal(1).add(waitTime.divide(computeTime, RoundingMode.HALF_UP)))
-                .setScale(0, BigDecimal.ROUND_UP);
+                                                   .multiply(new BigDecimal(1).add(waitTime.divide(computeTime, RoundingMode.HALF_UP)))
+                                                   .setScale(0, BigDecimal.ROUND_UP);
         return optimalThreadCount.intValue();
     }
 
@@ -84,6 +84,7 @@ public class ThreadPoolFactory {
             Thread thread = new Thread(this.group, r);
             thread.setName(trName);
             thread.setDaemon(this.daemon);
+            thread.setUncaughtExceptionHandler(new MigrationUncaughtExceptionHandler(LOGGER));
             return thread;
         }
 

@@ -15,7 +15,7 @@ import java.sql.PreparedStatement;
 public class JDBCExecutor {
     private Connection connection;
 
-    JDBCExecutor() {
+    public JDBCExecutor() {
         try {
             String url = MigrationConfig.getDatabaseUrl();
             String user = MigrationConfig.getDatabaseUser();

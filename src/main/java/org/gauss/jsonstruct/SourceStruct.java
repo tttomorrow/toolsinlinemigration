@@ -15,7 +15,7 @@ public class SourceStruct {
     private String schema;
     private String table;
     private String txId;
-    private String scn;
+    private Long scn;
     private String commit_scn;
     private String lcr_position;
 
@@ -99,11 +99,11 @@ public class SourceStruct {
         this.txId = txId;
     }
 
-    public String getScn() {
+    public Long getScn() {
         return scn;
     }
 
-    public void setScn(String scn) {
+    public void setScn(Long scn) {
         this.scn = scn;
     }
 
