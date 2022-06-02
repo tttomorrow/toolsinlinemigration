@@ -12,6 +12,7 @@ import org.gauss.util.OpenGaussConstant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,7 +42,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(column -> getColumnSqls(column))
                                                    .collect(Collectors.toList());
 
-        String primaryKeySql = getPrimaryKeySql(tableChangeStruct.getTable().getPrimaryKeyColumnNames());
+        String primaryKeySql = getPrimaryKeySql(tableChangeStruct.getTable());
 
         List<String> foreignKeySqls = tableChangeStruct.getTable().getForeignKeyColumns().stream()
                                                        .map(foreignKeyColumn -> getForeignKeySql(foreignKeyColumn)).collect(Collectors.toList());
@@ -138,8 +139,26 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         return sb.toString();
     }
 
-    private String getPrimaryKeySql(List<String> primaryKeys) {
-        Set<String> primaryKeySet = primaryKeys.stream().map(primaryKey -> wrapQuote(primaryKey)).collect(Collectors.toSet());
+    private String getPrimaryKeySql(TableChangeStruct.Table table){
+        List<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChanges = table.getPrimaryKeyColumnChanges();
+        if (CollectionUtils.isNotEmpty(primaryKeyColumnChanges)){
+            Set<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
+                                                                          .map(primaryKeyColumnChangeColumn -> wrapQuote(primaryKeyColumnChangeColumn.getColumnName()))
+                                                                          .collect(Collectors.toSet());
+            Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
+                    primaryKeyColumnChangeColumn -> StringUtils
+                            .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
+            if (primaryKeyColumnChange.isPresent()
+                    && StringUtils.equals(primaryKeyColumnChange.get().getAction().toUpperCase(), OpenGaussConstant.TABLE_PRIMARY_KEY_ADD)) {
+                return getPrimaryKeyAddByConstraintName(primaryKeyAddColumnNames, primaryKeyColumnChange.get().getConstraintName());
+            }
+        }
+        return getPrimaryKeySqlByNoConstraintName(table.getPrimaryKeyColumnNames());
+
+    }
+
+    private String getPrimaryKeySqlByNoConstraintName(List<String> primaryKeys) {
+        Set<String> primaryKeySet = primaryKeys.stream().map(this::wrapQuote).collect(Collectors.toSet());
         StringBuilder sb = new StringBuilder();
         if (!primaryKeySet.isEmpty()) {
             sb.append(StringUtils.LF);
@@ -148,6 +167,17 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
             sb.append(addBrackets(StringUtils.join(primaryKeySet, OpenGaussConstant.COMMA)));
             sb.append(StringUtils.LF);
         }
+        return sb.toString();
+    }
+
+    private String getPrimaryKeyAddByConstraintName(Set<String> columnNameList, String constraintName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(StringUtils.LF);
+        sb.append(OpenGaussConstant.TAB);
+        sb.append("CONSTRAINT ").append(constraintName).append(StringUtils.SPACE);
+        sb.append("PRIMARY KEY ");
+        sb.append(addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA)));
+        sb.append(StringUtils.LF);
         return sb.toString();
     }
 

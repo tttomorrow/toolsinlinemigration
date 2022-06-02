@@ -21,6 +21,10 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.Optional;
 
+/**
+ * 目前DDLSqlParser 已经废弃,对应逻辑移动到 org.gauss.util.ddl.convert 包下
+ */
+@Deprecated
 public class DDLSqlParser{
 
     private final static String TABLE_ALTER = "ALTER";
