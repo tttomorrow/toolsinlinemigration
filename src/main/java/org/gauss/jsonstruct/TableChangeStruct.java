@@ -179,6 +179,7 @@ public class TableChangeStruct {
         private String pkColumnName;
         private String fkColumnName;
         private String fkName;
+        private String cascade;
 
         public String getPktableSchem() {
             return pktableSchem;
@@ -198,6 +199,10 @@ public class TableChangeStruct {
 
         public String getFkName() {
             return fkName;
+        }
+
+        public String getCascade() {
+            return cascade;
         }
     }
 
@@ -219,6 +224,7 @@ public class TableChangeStruct {
         private String columnName;
         private String cascade;
         private String  constraintName;
+        private String type;
 
         public String getAction() {
             return action;
@@ -234,6 +240,10 @@ public class TableChangeStruct {
 
         public String getConstraintName() {
             return constraintName;
+        }
+
+        public String getType() {
+            return type;
         }
     }
 
