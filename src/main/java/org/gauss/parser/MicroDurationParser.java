@@ -4,7 +4,7 @@
 
 package org.gauss.parser;
 
-import org.postgresql.util.PGInterval;
+import org.opengauss.util.PGInterval;
 import static io.debezium.time.MicroDuration.DAYS_PER_MONTH_AVG;
 
 import java.util.Map;

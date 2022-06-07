@@ -56,20 +56,20 @@ public class DMLProcessor {
     public void process(KeyStruct key, DMLValueStruct value) {
         String op = value.getPayload().getOp();
         Envelope.Operation operation = Envelope.Operation.forCode(op);
-        Long currentScn = value.getPayload().getSource().getScn();
+        Long currentScn = Long.valueOf(value.getPayload().getSource().getCommit_scn());
         List<String> cacheDDlByScn = ddlCacheController.getCacheDDlByScn(currentScn);
         if (cacheDDlByScn.size() > 0) {
             // find ddl need to execute before
-            LOGGER.info("there is {} records ddl need execute before", cacheDDlByScn.size());
+            LOGGER.info("there is {} cached ddl need execute before", cacheDDlByScn.size());
             ddlCacheController.consumeDDL(cacheDDlByScn);
         }
         // We assume that table struct don't change. This assumption may be changed
         // in the future.
-        if (columnInfos.size() == 0) {
+//        if (columnInfos.size() == 0) {
             initKeyColumnInfos(key);
             initColumnInfos(value);
             initTableIdentity(value);
-        }
+//        }
 
         PreparedStatement statement;
         switch (operation) {
@@ -126,6 +126,7 @@ public class DMLProcessor {
     }
 
     private void initColumnInfos(DMLValueStruct value) {
+        columnInfos.clear();
         String fieldName;
         if (value.getPayload().getBefore() != null) {
             fieldName = "before";
@@ -160,7 +161,7 @@ public class DMLProcessor {
         if (key == null) {
             return;
         }
-
+        keyColumnInfos.clear();
         List<FieldStruct> keyColumnFields = key.getSchema().getFields();
         for (FieldStruct keyColField : keyColumnFields) {
             ColumnInfo keyColumnInfo = new ColumnInfo(

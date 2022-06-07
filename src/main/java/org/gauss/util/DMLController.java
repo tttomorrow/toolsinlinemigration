@@ -114,7 +114,7 @@ public class DMLController {
 
     public void process(ConsumerRecord<String, String> record, boolean needCacheInQueue) {
         if (record.value() == null) {
-            LOGGER.info("This is a topic after a DELETE topic, should ignore it.");
+            LOGGER.warn("This is a topic after a DELETE topic, should ignore it.");
             return;
         }
 
