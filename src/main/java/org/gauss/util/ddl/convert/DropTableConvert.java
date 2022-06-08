@@ -21,12 +21,17 @@ public class DropTableConvert extends BaseConvert implements DDLConvert {
     @Override
     public String convertToOpenGaussDDL(DDLValueStruct ddlValueStruct) {
         if (StringUtils.containsIgnoreCase(ddlValueStruct.getPayload().getTableChanges().get(0).getType(), "DROP")) {
-            TableChangeStruct tableChangeStruct = ddlValueStruct.getPayload().getTableChanges().get(0);
-            String id = tableChangeStruct.getId();
-            String[] split = id.split("\\.");
-            String schema = unwrapQuote(split[1]);
-            String tableName = unwrapQuote(split[2]);
-            return String.format("drop table %s.%s%n", wrapQuote(schema), wrapQuote(tableName));
+            String schema = unwrapQuote(ddlValueStruct.getPayload().getSource().getSchema());
+            String tableName = unwrapQuote(ddlValueStruct.getPayload().getSource().getTable());
+            String ddl = String.format("drop table %s.%s ", wrapQuote(schema), wrapQuote(tableName));
+            if (ddlValueStruct.getPayload().getDdl().toLowerCase().contains("cascade constraints purge")) {
+                ddl += " cascade constraints purge";
+            } else if (ddlValueStruct.getPayload().getDdl().toLowerCase().contains("cascade constraints")) {
+                ddl += " cascade constraints ";
+            } else if (ddlValueStruct.getPayload().getDdl().toLowerCase().contains(" purge")) {
+                ddl += "  purge";
+            }
+            return ddl;
         }
         return null;
     }
