@@ -232,10 +232,11 @@ public class DDLSqlParser{
             List<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
                 .map(primaryKeyColumnChangeColumn -> addQuo(primaryKeyColumnChangeColumn.getColumnName()))
                 .collect(Collectors.toList());
+            Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
+                primaryKeyColumnChangeColumn -> StringUtils
+                    .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
+            
             if (StringUtils.equals(action.toUpperCase(), TABLE_PRIMARY_KEY_ADD)) {
-                Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
-                    primaryKeyColumnChangeColumn -> StringUtils
-                        .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
                 if (primaryKeyColumnChange.isPresent()) {
                     primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames, alterTitleSql,
                         primaryKeyColumnChange.get().getConstraintName()));
@@ -247,8 +248,16 @@ public class DDLSqlParser{
                 primaryKeySqlList.addAll(primaryKeyColumnChanges.stream().map(
                     primaryKeyColumnChangeColumn -> getPrimaryKeyDropSqL(tableName, primaryKeyColumnChangeColumn,
                         alterTitleSql)).collect(Collectors.toSet()));
-                primaryKeySqlList.addAll(primaryKeyAddColumnNames.stream().map(columnName -> getColumnNullSql(columnName, alterTitleSql)).collect(
-                    Collectors.toSet()));
+                if (primaryKeyColumnChange.isPresent() && StringUtils.isNotEmpty(primaryKeyColumnChange.get().getConstraintName())) {
+                    if (StringUtils.equals(primaryKeyColumnChange.get().getType(), NumberUtils.INTEGER_ONE.toString())){
+                        primaryKeySqlList.addAll(primaryKeyAddColumnNames.stream().map(columnName -> getColumnNullSql(columnName, alterTitleSql)).collect(
+                            Collectors.toSet()));
+                    }
+                } else {
+                    primaryKeySqlList.addAll(primaryKeyAddColumnNames.stream().map(columnName -> getColumnNullSql(columnName, alterTitleSql)).collect(
+                        Collectors.toSet()));
+                }
+               
             }
         }
         return primaryKeySqlList;
@@ -368,6 +377,9 @@ public class DDLSqlParser{
             .append(addQuo(foreignKeyColumn.getPktableName()))
             .append(StringUtils.SPACE)
             .append(addBrackets(pkColumnNameStr));
+        if (StringUtils.isNotEmpty(foreignKeyColumn.getCascade())) {
+            sb.append(StringUtils.SPACE).append(foreignKeyColumn.getCascade());
+        }
         return sb.toString();
     }
 
