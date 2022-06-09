@@ -147,14 +147,8 @@ public class DMLProcessor {
     }
 
     private void initTableIdentity(DMLValueStruct value) {
-        if (table.toLowerCase().equals(table) || table.toUpperCase().equals(table)) {
-            table = table.toLowerCase();
-        }
         String schema = value.getPayload().getSource().getSchema();
-        if (schema.toLowerCase().equals(schema) || schema.toUpperCase().equals(schema)) {
-            schema = schema.toLowerCase();
-        }
-        tableIdentity = String.format("%s.%s", quoteCharacter.wrap(schema), quoteCharacter.wrap(table));
+        tableIdentity = String.format("%s.%s", getObjectNameForOpenGauss(schema), getObjectNameForOpenGauss(table));
     }
 
     private void initKeyColumnInfos(KeyStruct key) {
@@ -175,20 +169,22 @@ public class DMLProcessor {
         String[] columnNames = new String[n];
         String[] columnValues = new String[n];
         for (int i = 0; i < n; ++i) {
-            columnNames[i] = columnInfos.get(i).getName();
+            String rawColumnName = columnInfos.get(i).getName();
+            columnNames[i] = getObjectNameForOpenGauss(rawColumnName);
             columnValues[i] = "?";
         }
-
         String columnNamesSQL = String.join(", ", columnNames);
         String columnValuesSQL = String.join(", ", columnValues);
         insertSQL = String.format(DMLSQL.INSERT_SQL, tableIdentity, columnNamesSQL, columnValuesSQL);
+        LOGGER.info(insertSQL);
     }
 
     private void initUpdateSQL() {
         int n = columnInfos.size();
         String[] columnNameValues = new String[n];
         for (int i = 0; i < n; ++i) {
-            columnNameValues[i] = columnInfos.get(i).getName() + " = ?";
+            String rawColumnName = columnInfos.get(i).getName();
+            columnNameValues[i] = getObjectNameForOpenGauss(rawColumnName)+ " = ?";
         }
         String nameValues = String.join(", ", columnNameValues);
         updateSQL = String.format(DMLSQL.UPDATE_SQL, tableIdentity, nameValues);
@@ -212,8 +208,9 @@ public class DMLProcessor {
 
         List<String> whereSQL = new ArrayList<>();
         for (ColumnInfo columnInfo : identifyColInfos) {
-            String name = columnInfo.getName();
-            Object colValue = identifyColValues.get(name);
+            String rawName=columnInfo.getName();
+            String name = getObjectNameForOpenGauss(rawName);
+            Object colValue = identifyColValues.get(rawName);
             if (colValue == null) {
                 // We can't set a == null in where clause so we build null string.
                 whereSQL.add(name + " IS NULL");
@@ -236,6 +233,21 @@ public class DMLProcessor {
         }
 
         return String.join(" and ", whereSQL);
+    }
+
+    /**
+     * convert oracle Object to openGauss Object
+     * example: OBJECT_A convert to object_a
+     *          Object_A convert to Object_A
+     * @param rawColumnName
+     * @return
+     */
+    public String getObjectNameForOpenGauss(String rawColumnName) {
+        if (rawColumnName.toLowerCase().equals(rawColumnName) || rawColumnName.toUpperCase().equals(rawColumnName)) {
+            rawColumnName = rawColumnName.toLowerCase();
+        }
+        rawColumnName = quoteCharacter.wrap(rawColumnName);
+        return rawColumnName;
     }
 
     private PreparedStatement getInsertStatement(DMLValueStruct value) {
@@ -274,7 +286,7 @@ public class DMLProcessor {
         List<Object> whereColValues = new ArrayList<>();
         String whereClause = getWhereClause(key, value, whereColInfos, whereColValues);
         String completeUpdateSQL = updateSQL + whereClause;
-
+        LOGGER.info("UPDATE SQL:{}",completeUpdateSQL);
         columnInSQL.addAll(whereColInfos);
         valueInSQL.addAll(whereColValues);
         PreparedStatement statement = getStatement(completeUpdateSQL, columnInSQL, valueInSQL);
@@ -292,7 +304,7 @@ public class DMLProcessor {
         String whereClause = getWhereClause(key, value, whereColInfos, whereColValues);
 
         String completeDeleteSQL = deleteSQL + whereClause;
-
+        LOGGER.info("DELETE SQL: {}",completeDeleteSQL);
         PreparedStatement statement = getStatement(completeDeleteSQL, whereColInfos, whereColValues);
 
         return statement;
