@@ -80,7 +80,7 @@
 
         <dependency>
             <groupId>io.debezium</groupId>
-            <artifactId>debezium-connector-oracle</artifactId>
+            <artifactId>debezium-core</artifactId>
             <version>${debezium.version}</version>
         </dependency>
 
