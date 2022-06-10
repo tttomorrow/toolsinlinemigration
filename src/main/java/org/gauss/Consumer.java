@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLOutput;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
@@ -124,6 +125,9 @@ public class Consumer {
                     break;
                 case "--help":
                     System.out.println("--help cant used together with other parameters!");
+                case "--smartConversionOfObjectNames":
+                    MigrationConfig.smartConversionOfObjectNames(true);
+                    break;
                 default:
                     System.out.println("unrecognized config parameter: " + args[i] + "!");
                     System.exit(0);
@@ -157,5 +161,6 @@ public class Consumer {
         System.out.println("    --from-beginning        consume the messages from beginning");
         System.out.println("    --consumer-file-path    the application property file");
         System.out.println("    --help                  print the help message");
+        System.out.println("    --smartConversionOfObjectNames smart conversion of object name ex: OBJECT_A -> object_a, oBject_a -> oBject_a ");
     }
 }

@@ -1,6 +1,8 @@
 package org.gauss.util.ddl.convert;
 
 import org.apache.commons.lang3.StringUtils;
+import org.gauss.MigrationConfig;
+import org.gauss.util.ObjectNameConvertUtil;
 import org.gauss.util.OpenGaussConstant;
 import org.gauss.util.QuoteCharacter;
 
@@ -18,9 +20,7 @@ public abstract class BaseConvert implements DDLConvert {
     private QuoteCharacter quoteCharacter = QuoteCharacter.DOUBLE_QUOTE;
 
     public String wrapQuote(String s) {
-        if (s.toLowerCase().equals(s) || s.toUpperCase().equals(s)) {
-            s = s.toLowerCase();
-        }
+        s = ObjectNameConvertUtil.getObjectNameForOpenGauss(s);
         return quoteCharacter.wrap(s);
     }
     public String addBrackets(Object str) {
