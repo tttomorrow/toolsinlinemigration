@@ -7,6 +7,8 @@ import org.gauss.jsonstruct.DDLValueStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
 import org.gauss.util.OpenGaussConstant;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,16 +24,22 @@ public final class DDLConvertHandler {
     private DDLConvertHandler() {
     }
 
-    public static boolean isAlterNeedParseSql(TableChangeStruct tableChangeStruct){
+    public static boolean isAlterNeedParseSql(TableChangeStruct tableChangeStruct) {
         TableChangeStruct.Table table = tableChangeStruct.getTable();
         if (table != null && StringUtils.equals(tableChangeStruct.getType(), OpenGaussConstant.TABLE_ALTER)) {
-            return (CollectionUtils.isNotEmpty(table.getPrimaryKeyColumnChanges()))
-                    || CollectionUtils.isNotEmpty(table.getCheckColumns())
-                    || CollectionUtils.isNotEmpty(table.getUniqueColumns())
-                    || CollectionUtils.isNotEmpty(table.getForeignKeyColumns())
-                    || CollectionUtils.isNotEmpty(getColumnChanges(table.getColumns()));
+            return (CollectionUtils.isNotEmpty(table.getPrimaryKeyColumnChanges())) || CollectionUtils.isNotEmpty(table.getCheckColumns()) ||
+                    CollectionUtils.isNotEmpty(table.getUniqueColumns()) || CollectionUtils.isNotEmpty(table.getForeignKeyColumns());
         }
         return Boolean.FALSE;
+    }
+
+    public static boolean isTableColumnModify(TableChangeStruct tableChangeStruct) {
+        TableChangeStruct.Table table = tableChangeStruct.getTable();
+        if (table != null && StringUtils.equals(tableChangeStruct.getType(), OpenGaussConstant.TABLE_ALTER)) {
+            return CollectionUtils.isNotEmpty(getColumnChanges(table.getColumns())) ||
+                    (table.getChangeColumns() != null && table.getChangeColumns().hasChangeColumn());
+        }
+        return false;
     }
 
     private static List<TableChangeStruct.column> getColumnChanges(List<TableChangeStruct.column> columns) {
@@ -42,18 +50,40 @@ public final class DDLConvertHandler {
      * @param payload
      * @return
      */
-    public static DDLConvert getDDlConvert(DDLValueStruct.PayloadStruct payload) {
-        if (StringUtils.containsIgnoreCase(payload.getDdl(), OpenGaussConstant.TABLE_RENAME)) {
-            return new RenameTableConvert();
-        } else if (StringUtils.containsIgnoreCase(payload.getTableChanges().get(0).getType(), OpenGaussConstant.TABLE_PRIMARY_KEY_DROP)) {
-            return new DropTableConvert();
-        } else if (payload.getTableChanges()
-                          .stream()
-                          .anyMatch(tableChangeStruct -> StringUtils.equals(tableChangeStruct.getType(), OpenGaussConstant.TABLE_CREATE))) {
-            return new CreateTableConvert();
-        } else if (payload.getTableChanges().stream().anyMatch((DDLConvertHandler::isAlterNeedParseSql))) {
-            return new AlterTableConstraintConvert();
+    public static List<DDLConvert> getDDlConvert(DDLValueStruct.PayloadStruct payload) {
+        List<DDLConvert> ddlConverts = new ArrayList<>();
+        // create index or drop index
+        if (StringUtils.containsIgnoreCase(payload.getTableChanges().get(0).getType(), OpenGaussConstant.CREATE_INDEX) ||
+                StringUtils.containsIgnoreCase(payload.getTableChanges().get(0).getType(), OpenGaussConstant.DROP_INDEX)) {
+            ddlConverts.add(new IndexConvert());
         }
-        return ddlValueStruct -> ddlValueStruct.getPayload().getDdl();
+        //rename table
+        if (StringUtils.containsIgnoreCase(payload.getDdl(), OpenGaussConstant.TABLE_RENAME)) {
+            ddlConverts.add(new RenameTableConvert());
+
+        }
+        //drop table
+        if (StringUtils.containsIgnoreCase(payload.getTableChanges().get(0).getType(), OpenGaussConstant.TABLE_PRIMARY_KEY_DROP)) {
+            ddlConverts.add(new DropTableConvert());
+
+        }
+        //create table
+        if (payload.getTableChanges()
+                   .stream()
+                   .anyMatch(tableChangeStruct -> StringUtils.equals(tableChangeStruct.getType(), OpenGaussConstant.TABLE_CREATE))) {
+            ddlConverts.add(new CreateTableConvert());
+
+        }
+        if (payload.getTableChanges().stream().anyMatch(DDLConvertHandler::isTableColumnModify)) {
+            ddlConverts.add(new AlterTableColumnConvert());
+        }
+        // table constraint
+        if (payload.getTableChanges().stream().anyMatch((DDLConvertHandler::isAlterNeedParseSql))) {
+            ddlConverts.add(new AlterTableConstraintConvert());
+        }
+        if (CollectionUtils.isEmpty(ddlConverts)) {
+            ddlConverts.add(ddlValueStruct -> Collections.singletonList(ddlValueStruct.getPayload().getDdl()));
+        }
+        return ddlConverts;
     }
 }

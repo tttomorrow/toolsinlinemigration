@@ -11,34 +11,36 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.List;
 
+
 /**
  * @author saxisuer
- * @Description
- * @date 2022/6/29
+ * @Description //TODO
+ * @date 2022/6/23
  * @email sheng.pu@enmotech.com
  * @COMPANY ENMOTECH
  */
-public class RenameTableConvertTest {
+public class DropTableConvertTest {
 
     private final ObjectMapper topicMapper = new ObjectMapper();
 
-    private RenameTableConvert renameTableConvert = new RenameTableConvert();
+    private DropTableConvert dropTableConvert = new DropTableConvert();
 
     private DDLValueStruct ddlValueStruct = null;
+
     private String topicValue;
+
 
     @Before
     public void before() throws IOException {
         topicMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        topicValue = TestUtil.readJsonFromFile("RenameTableTopicValue.json");
+        topicValue = TestUtil.readJsonFromFile("DropTableTopicValue.json");
         ddlValueStruct = topicMapper.readValue(topicValue, DDLValueStruct.class);
     }
 
     @Test
     public void test() {
-        List<String> s = renameTableConvert.convertToOpenGaussDDL(ddlValueStruct);
-        System.out.println(s);
-        Assert.assertEquals(s.size(), 1);
-        Assert.assertEquals("ALTER TABLE \"C##ROMA_LOGMINER\".\"T_DDL_0031\" RENAME TO \"T_DDL_0031_01\"", s.get(0));
+        List<String> s = dropTableConvert.convertToOpenGaussDDL(ddlValueStruct);
+        Assert.assertEquals(1, s.size());
     }
+
 }

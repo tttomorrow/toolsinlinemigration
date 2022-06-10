@@ -1,0 +1,616 @@
+{
+  "schema": {
+    "type": "struct",
+    "fields": [
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "string",
+            "optional": false,
+            "field": "version"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "connector"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "name"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "field": "ts_ms"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "name": "io.debezium.data.Enum",
+            "version": 1,
+            "parameters": {
+              "allowed": "true,last,false,incremental"
+            },
+            "default": "false",
+            "field": "snapshot"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "db"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "sequence"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "schema"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "table"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "txId"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "commit_scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "lcr_position"
+          }
+        ],
+        "optional": false,
+        "name": "io.debezium.connector.oracle.Source",
+        "field": "source"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "databaseName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "schemaName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "ddl"
+      },
+      {
+        "type": "array",
+        "items": {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "string",
+              "optional": false,
+              "field": "type"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "id"
+            },
+            {
+              "type": "struct",
+              "fields": [
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "defaultCharsetName"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "optional": false
+                  },
+                  "optional": true,
+                  "field": "primaryKeyColumnNames"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "optional": false
+                  },
+                  "optional": true,
+                  "field": "primaryConstraintName"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "map",
+                    "keys": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "values": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "optional": true
+                  },
+                  "optional": true,
+                  "field": "primaryKeyColumnChanges"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "map",
+                    "keys": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "values": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "optional": true
+                  },
+                  "optional": true,
+                  "field": "foreignKeyColumns"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "map",
+                    "keys": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "values": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "optional": true
+                  },
+                  "optional": true,
+                  "field": "uniqueColumns"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "map",
+                    "keys": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "values": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "optional": true
+                  },
+                  "optional": true,
+                  "field": "checkColumns"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "name"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "jdbcType"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "nativeType"
+                      },
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "typeName"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "typeExpression"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "charsetName"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "length"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "scale"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "position"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "optional"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "defaultValueExpression"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "autoIncremented"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "generated"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "comment"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "optional": false
+                        },
+                        "optional": true,
+                        "field": "modifyKeys"
+                      }
+                    ],
+                    "optional": false,
+                    "name": "io.debezium.connector.schema.Column"
+                  },
+                  "optional": false,
+                  "field": "columns"
+                },
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "comment"
+                },
+                {
+                  "type": "map",
+                  "keys": {
+                    "type": "string",
+                    "optional": false
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "optional": true
+                    },
+                    "optional": false
+                  },
+                  "optional": true,
+                  "field": "changeColumns"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "optional": true
+                  },
+                  "optional": true,
+                  "field": "indexes"
+                },
+                {
+                  "type": "struct",
+                  "fields": [
+                    {
+                      "type": "string",
+                      "optional": true,
+                      "field": "indexId"
+                    },
+                    {
+                      "type": "string",
+                      "optional": true,
+                      "field": "indexName"
+                    },
+                    {
+                      "type": "string",
+                      "optional": true,
+                      "field": "tableId"
+                    },
+                    {
+                      "type": "string",
+                      "optional": true,
+                      "field": "tableName"
+                    },
+                    {
+                      "type": "string",
+                      "optional": true,
+                      "field": "schemaName"
+                    },
+                    {
+                      "type": "boolean",
+                      "optional": true,
+                      "field": "unique"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "struct",
+                        "fields": [
+                          {
+                            "type": "string",
+                            "optional": true,
+                            "field": "columnExpr"
+                          },
+                          {
+                            "type": "boolean",
+                            "optional": true,
+                            "field": "desc"
+                          },
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "optional": true
+                            },
+                            "optional": true,
+                            "field": "includeColumn"
+                          }
+                        ],
+                        "optional": false
+                      },
+                      "optional": true,
+                      "field": "indexColumnExpr"
+                    }
+                  ],
+                  "optional": true,
+                  "field": "indexChanges"
+                }
+              ],
+              "optional": false,
+              "name": "io.debezium.connector.schema.Table",
+              "field": "table"
+            }
+          ],
+          "optional": false,
+          "name": "io.debezium.connector.schema.Change"
+        },
+        "optional": false,
+        "field": "tableChanges"
+      }
+    ],
+    "optional": false,
+    "name": "io.debezium.connector.oracle.SchemaChangeValue"
+  },
+  "payload": {
+    "source": {
+      "version": "1.8.1.Final",
+      "connector": "oracle",
+      "name": "my_oracle_connector",
+      "ts_ms": 1661006370000,
+      "snapshot": "false",
+      "db": "ORCL",
+      "sequence": null,
+      "schema": "PUSHENG",
+      "table": "TAB_1",
+      "txId": null,
+      "scn": "250353550",
+      "commit_scn": null,
+      "lcr_position": null
+    },
+    "databaseName": "ORCL",
+    "schemaName": "PUSHENG",
+    "ddl": "alter table TAB_1\n    modify (col_3 varchar2(32) default 'aaa' not null constraint uk_col_3 unique)\n    modify (col_0 varchar2(32) default 'abc' null)\n    add col_5 varchar(64)\n    add col_6 number(5) default 1 not null\n    add constraint tab_1_pk primary key (col_6)\n    add constraint tab_1_uk_1 unique (col_2,col_0)\n    add constraint TAB_1_CK\n        check (col_6 in (10, 20, 30));",
+    "tableChanges": [
+      {
+        "type": "ALTER",
+        "id": "\"ORCL\".\"PUSHENG\".\"TAB_1\"",
+        "table": {
+          "defaultCharsetName": null,
+          "primaryKeyColumnNames": [
+            "COL_6"
+          ],
+          "primaryConstraintName": [
+            "TAB_1_PK"
+          ],
+          "primaryKeyColumnChanges": [
+            {
+              "action": "add",
+              "constraintName": "TAB_1_PK",
+              "columnName": "COL_6"
+            }
+          ],
+          "foreignKeyColumns": [],
+          "uniqueColumns": [
+            {
+              "indexName": "UK_COL_3",
+              "columnName": "COL_3"
+            },
+            {
+              "indexName": "TAB_1_UK_1",
+              "columnName": "COL_2"
+            },
+            {
+              "indexName": "TAB_1_UK_1",
+              "columnName": "COL_0"
+            }
+          ],
+          "checkColumns": [
+            {
+              "condition": "\"COL_6\" in (10,20,30)",
+              "indexName": "TAB_1_CK"
+            }
+          ],
+          "columns": [
+            {
+              "name": "COL_1",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 10,
+              "scale": null,
+              "position": 1,
+              "optional": true,
+              "defaultValueExpression": null,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "modifyKeys": null
+            },
+            {
+              "name": "COL_2",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 10,
+              "scale": null,
+              "position": 2,
+              "optional": true,
+              "defaultValueExpression": null,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "modifyKeys": null
+            },
+            {
+              "name": "COL_3",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 32,
+              "scale": null,
+              "position": 3,
+              "optional": false,
+              "defaultValueExpression": "'aaa'",
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "modifyKeys": [
+                "defaultValueExpression",
+                "optional"
+              ]
+            },
+            {
+              "name": "COL_0",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 32,
+              "scale": null,
+              "position": 4,
+              "optional": true,
+              "defaultValueExpression": "'abc'",
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "modifyKeys": [
+                "defaultValueExpression",
+                "optional"
+              ]
+            },
+            {
+              "name": "COL_4",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 64,
+              "scale": null,
+              "position": 5,
+              "optional": true,
+              "defaultValueExpression": null,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "modifyKeys": null
+            },
+            {
+              "name": "COL_5",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 64,
+              "scale": null,
+              "position": 6,
+              "optional": true,
+              "defaultValueExpression": null,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "modifyKeys": null
+            },
+            {
+              "name": "COL_6",
+              "jdbcType": 2,
+              "nativeType": null,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "charsetName": null,
+              "length": 5,
+              "scale": 0,
+              "position": 7,
+              "optional": false,
+              "defaultValueExpression": "1",
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null,
+              "modifyKeys": null
+            }
+          ],
+          "comment": null,
+          "changeColumns": {
+            "modifyColumn": [
+              "COL_3",
+              "COL_0"
+            ],
+            "addColumn": [
+              "COL_5",
+              "COL_6"
+            ]
+          },
+          "indexes": [],
+          "indexChanges": null
+        }
+      }
+    ]
+  }
+}

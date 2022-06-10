@@ -42,6 +42,8 @@ public class MigrationConfig {
 
     private String schema = null;
 
+    private String indexPrefix="";
+
     private MigrationConfig() {
 
     }
@@ -167,6 +169,14 @@ public class MigrationConfig {
 
     public static void smartConversionOfObjectNames(boolean b) {
         INSTANCE.smartConversionOfObjectNames = b;
+    }
+
+    public static void setIndexPrefix(String prefix) {
+        INSTANCE.indexPrefix = prefix;
+    }
+
+    public static String getIndexPrefix() {
+        return INSTANCE.indexPrefix;
     }
 
     public static boolean isSmartConversionOfObjectNames() {

@@ -1,0 +1,376 @@
+{
+  "schema": {
+    "type": "struct",
+    "fields": [
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "string",
+            "optional": false,
+            "field": "version"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "connector"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "name"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "field": "ts_ms"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "name": "io.debezium.data.Enum",
+            "version": 1,
+            "parameters": {
+              "allowed": "true,last,false,incremental"
+            },
+            "default": "false",
+            "field": "snapshot"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "db"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "sequence"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "schema"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "table"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "txId"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "commit_scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "lcr_position"
+          }
+        ],
+        "optional": false,
+        "name": "io.debezium.connector.oracle.Source",
+        "field": "source"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "databaseName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "schemaName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "ddl"
+      },
+      {
+        "type": "array",
+        "items": {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "string",
+              "optional": false,
+              "field": "type"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "id"
+            },
+            {
+              "type": "struct",
+              "fields": [
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "defaultCharsetName"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "optional": false
+                  },
+                  "optional": true,
+                  "field": "primaryKeyColumnNames"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "name"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "jdbcType"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "nativeType"
+                      },
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "typeName"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "typeExpression"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "charsetName"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "length"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "scale"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "position"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "optional"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "autoIncremented"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "generated"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "comment"
+                      }
+                    ],
+                    "optional": false,
+                    "name": "io.debezium.connector.schema.Column"
+                  },
+                  "optional": false,
+                  "field": "columns"
+                },
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "comment"
+                }
+              ],
+              "optional": false,
+              "name": "io.debezium.connector.schema.Table",
+              "field": "table"
+            }
+          ],
+          "optional": false,
+          "name": "io.debezium.connector.schema.Change"
+        },
+        "optional": false,
+        "field": "tableChanges"
+      }
+    ],
+    "optional": false,
+    "name": "io.debezium.connector.oracle.SchemaChangeValue"
+  },
+  "payload": {
+    "source": {
+      "version": "1.8.0-SNAPSHOT",
+      "connector": "oracle",
+      "name": "20220411184048",
+      "ts_ms": 1650344535000,
+      "snapshot": "false",
+      "db": "ORCL",
+      "schema": "HONGYE",
+      "table": "TEST_1",
+      "txId": "02000b002d230100",
+      "scn": "183161444",
+      "commit_scn": "183059719"
+    },
+    "databaseName": "ORCL",
+    "schemaName": "HONGYE",
+    "ddl": "alter table TEST_1\n    add D5 varchar(128);",
+    "tableChanges": [
+      {
+        "type": "ALTER",
+        "id": "\"ORCL\".\"HONGYE\".\"TEST_1\"",
+        "table": {
+          "primaryKeyColumnNames": [
+            "ID"
+          ],
+          "changeColumns": {
+            "addColumn": [
+              "TEST_HID"
+            ],
+            "dropColumn": [],
+            "modifyColumn": []
+          },
+          "columns": [
+            {
+              "name": "ID",
+              "jdbcType": 2,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "length": 0,
+              "position": 1,
+              "optional": false,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "NAME",
+              "jdbcType": 12,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "length": 10,
+              "position": 2,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "TEST_HID",
+              "jdbcType": 2,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "length": 0,
+              "position": 3,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "TEST_VIRTUAL",
+              "jdbcType": 2,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "length": 0,
+              "position": 4,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "TEST_ADD",
+              "jdbcType": 12,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "length": 128,
+              "position": 5,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "D1",
+              "jdbcType": 93,
+              "typeName": "DATE",
+              "typeExpression": "DATE",
+              "position": 6,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "D2",
+              "jdbcType": 93,
+              "typeName": "TIMESTAMP(6)",
+              "typeExpression": "TIMESTAMP(6)",
+              "length": 6,
+              "position": 7,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "D3",
+              "jdbcType": 93,
+              "typeName": "TIMESTAMP(3)",
+              "typeExpression": "TIMESTAMP(3)",
+              "length": 3,
+              "position": 8,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "D4",
+              "jdbcType": 93,
+              "typeName": "TIMESTAMP(6)",
+              "typeExpression": "TIMESTAMP(6)",
+              "length": 6,
+              "position": 9,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            },
+            {
+              "name": "D5",
+              "jdbcType": 12,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "length": 128,
+              "position": 10,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

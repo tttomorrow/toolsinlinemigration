@@ -9,9 +9,11 @@ import org.gauss.jsonstruct.SourceStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
 import org.gauss.util.OpenGaussConstant;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,98 +41,89 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
     }
 
     private String convertCreateSqlToOpenGaussSql(TableChangeStruct tableChangeStruct, SourceStruct source) {
-        List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(this::getColumnSqls)
-                                                   .collect(Collectors.toList());
+        List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(this::getColumnSqls).collect(Collectors.toList());
 
         String primaryKeySql = getPrimaryKeySql(tableChangeStruct.getTable());
 
-        List<String> foreignKeySqls = tableChangeStruct.getTable().getForeignKeyColumns().stream()
-                                                       .map(this::getForeignKeySql).collect(Collectors.toList());
+        List<String> foreignKeySqls = tableChangeStruct.getTable()
+                                                       .getForeignKeyColumns()
+                                                       .stream()
+                                                       .map(this::getForeignKeySql)
+                                                       .collect(Collectors.toList());
 
-        List<String> uniqueColumnSqls = tableChangeStruct.getTable().getUniqueColumns().stream()
-                                                         .map(this::getUniqueSql).collect(Collectors.toList());
+        List<TableChangeStruct.IndexColumn> uniqueColumns = tableChangeStruct.getTable().getUniqueColumns();
+        List<String> uniqueColumnSqls = getUniqueColumnSqls(uniqueColumns);
 
-        List<String> checkColumnSqls = tableChangeStruct.getTable().getCheckColumns().stream()
-                                                        .map(this::getCheckSql).collect(Collectors.toList());
+        List<String> checkColumnSqls = tableChangeStruct.getTable().getCheckColumns().stream().map(this::getCheckSql).collect(Collectors.toList());
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(getTableTitleSql(source))
-          .append(OpenGaussConstant.BRACKETS_START);
+        return getTableTitleSql(source) + OpenGaussConstant.BRACKETS_START + StringUtils.join(columnSqls, getColumnJoinStr()) +
+                (StringUtils.isNotEmpty(primaryKeySql) ? OpenGaussConstant.COMMA : StringUtils.EMPTY) + primaryKeySql +
+                (CollectionUtils.isNotEmpty(uniqueColumnSqls) ? OpenGaussConstant.COMMA : StringUtils.EMPTY) +
+                StringUtils.join(uniqueColumnSqls, getColumnJoinStr()) +
+                (CollectionUtils.isNotEmpty(checkColumnSqls) ? OpenGaussConstant.COMMA : StringUtils.EMPTY) +
+                StringUtils.join(checkColumnSqls, getColumnJoinStr()) +
+                (CollectionUtils.isNotEmpty(foreignKeySqls) ? OpenGaussConstant.COMMA : StringUtils.EMPTY) +
+                StringUtils.join(foreignKeySqls, getColumnJoinStr()) + OpenGaussConstant.BRACKETS_ENDT;
+    }
 
-        sb.append(StringUtils.join(columnSqls, getColumnJoinStr()));
+    private List<String> getUniqueColumnSqls(List<TableChangeStruct.IndexColumn> uniqueColumns) {
+        List<String> sql = new ArrayList<>();
+        Map<String, List<TableChangeStruct.IndexColumn>> uniqueConstraintGroupByConstraintName = uniqueColumns.stream()
+                                                                                                              .filter(uniqueColumn -> StringUtils.isNotBlank(
+                                                                                                                      uniqueColumn.getIndexName()))
+                                                                                                              .collect(Collectors.groupingBy(
+                                                                                                                      TableChangeStruct.IndexColumn::getIndexName));
+        for (Map.Entry<String, List<TableChangeStruct.IndexColumn>> eachUniqueConstraint : uniqueConstraintGroupByConstraintName.entrySet()) {
+            List<String> uniqueColumnNames = eachUniqueConstraint.getValue()
+                                                                 .stream()
+                                                                 .map(uniqueColumn -> wrapQuote(uniqueColumn.getColumnName()))
+                                                                 .collect(Collectors.toList());
+            String uniqueAlterSql = getUniqueSql(eachUniqueConstraint.getKey(), uniqueColumnNames);
+            sql.add(uniqueAlterSql);
+        }
 
-        sb.append(StringUtils.isNotEmpty(primaryKeySql)? OpenGaussConstant.COMMA : StringUtils.EMPTY);
-        sb.append(primaryKeySql);
-
-        sb.append(CollectionUtils.isNotEmpty(uniqueColumnSqls)? OpenGaussConstant.COMMA : StringUtils.EMPTY);
-        sb.append(StringUtils.join(uniqueColumnSqls, getColumnJoinStr()));
-
-        sb.append(CollectionUtils.isNotEmpty(checkColumnSqls)? OpenGaussConstant.COMMA : StringUtils.EMPTY);
-        sb.append(StringUtils.join(checkColumnSqls, getColumnJoinStr()));
-
-        sb.append(CollectionUtils.isNotEmpty(foreignKeySqls)? OpenGaussConstant.COMMA : StringUtils.EMPTY);
-        sb.append(StringUtils.join(foreignKeySqls, getColumnJoinStr()));
-
-        sb.append(OpenGaussConstant.BRACKETS_ENDT);
-        return sb.toString();
+        return sql;
     }
 
 
-    private String  getUniqueSql(TableChangeStruct.IndexColumn uniqueColumn) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(StringUtils.LF);
-        sb.append(OpenGaussConstant.TAB);
-        sb.append("CONSTRAINT ");
-        sb.append(uniqueColumn.getIndexName()).append(StringUtils.SPACE);
-        sb.append("UNIQUE ");
-        sb.append(StringUtils.SPACE)
-          .append(addBrackets(wrapQuote(uniqueColumn.getColumnName())));
-        return sb.toString();
+    private String getUniqueSql(String uniqueKeyName, List<String> columnNames) {
+        return StringUtils.LF + OpenGaussConstant.TAB + OpenGaussConstant.CONSTRAINT + StringUtils.SPACE + wrapQuote(uniqueKeyName) +
+                StringUtils.SPACE + OpenGaussConstant.UNIQUE + StringUtils.SPACE + StringUtils.SPACE +
+                addBrackets(String.join(OpenGaussConstant.COMMA, columnNames));
     }
 
     private String getCheckSql(TableChangeStruct.CheckColumn checkColumn) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(StringUtils.LF);
-        sb.append(OpenGaussConstant.TAB);
-        sb.append("CONSTRAINT ");
-        sb.append(checkColumn.getIndexName()).append(StringUtils.SPACE);
-        sb.append("CHECK ");
-        sb.append(StringUtils.SPACE)
-          .append(addBrackets(checkColumn.getCondition()));
-        return sb.toString();
+        return StringUtils.LF + OpenGaussConstant.TAB + OpenGaussConstant.CONSTRAINT + StringUtils.SPACE + checkColumn.getIndexName() +
+                StringUtils.SPACE + OpenGaussConstant.CHECK + StringUtils.SPACE + StringUtils.SPACE + addBrackets(checkColumn.getCondition());
     }
 
     private String getForeignKeySql(TableChangeStruct.ForeignKeyColumn foreignKeyColumn) {
 
         String fkColumnNameStr = wrapQuote(foreignKeyColumn.getFkColumnName());
-        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(OpenGaussConstant.COMMA))){
-            fkColumnNameStr =
-                    StringUtils.join(Arrays.stream(foreignKeyColumn.getFkColumnName().split(String.valueOf(OpenGaussConstant.COMMA)))
-                                           .map(this::wrapQuote).collect(Collectors.toList()),
-                                     String.valueOf(OpenGaussConstant.COMMA));
+        if (foreignKeyColumn.getFkColumnName().contains(OpenGaussConstant.COMMA)) {
+            fkColumnNameStr = StringUtils.join(Arrays.stream(foreignKeyColumn.getFkColumnName().split(OpenGaussConstant.COMMA))
+                                                     .map(this::wrapQuote)
+                                                     .collect(Collectors.toList()), OpenGaussConstant.COMMA);
         }
 
         String pkColumnNameStr = wrapQuote(foreignKeyColumn.getPkColumnName());
-        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(OpenGaussConstant.COMMA))){
-            pkColumnNameStr =
-                    StringUtils.join(Arrays.stream(foreignKeyColumn.getPkColumnName().split(String.valueOf(OpenGaussConstant.COMMA)))
-                                           .map(this::wrapQuote).collect(Collectors.toList()),
-                                     String.valueOf(OpenGaussConstant.COMMA));
+        if (foreignKeyColumn.getFkColumnName().contains(OpenGaussConstant.COMMA)) {
+            pkColumnNameStr = StringUtils.join(Arrays.stream(foreignKeyColumn.getPkColumnName().split(OpenGaussConstant.COMMA))
+                                                     .map(this::wrapQuote)
+                                                     .collect(Collectors.toList()), OpenGaussConstant.COMMA);
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append(StringUtils.LF);
         sb.append(OpenGaussConstant.TAB);
-        sb.append("CONSTRAINT ");
+        sb.append(OpenGaussConstant.CONSTRAINT).append(StringUtils.SPACE);
         sb.append(foreignKeyColumn.getFkName()).append(StringUtils.SPACE);
-        sb.append("FOREIGN KEY ");
-        sb.append(StringUtils.SPACE)
-          .append(addBrackets(fkColumnNameStr))
-          .append(StringUtils.SPACE);
+        sb.append(OpenGaussConstant.FOREIGN_KEY).append(StringUtils.SPACE);
+        sb.append(StringUtils.SPACE).append(addBrackets(fkColumnNameStr)).append(StringUtils.SPACE);
         sb.append(StringUtils.LF);
         sb.append(OpenGaussConstant.TAB);
-        sb.append("REFERENCES ");
-        sb.append(StringUtils.SPACE)
+        sb.append(OpenGaussConstant.REFERENCES)
+          .append(StringUtils.SPACE)
           .append(wrapQuote(foreignKeyColumn.getPktableSchem()))
           .append(OpenGaussConstant.DOT)
           .append(wrapQuote(foreignKeyColumn.getPktableName()))
@@ -142,17 +135,18 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         return sb.toString();
     }
 
-    private String getPrimaryKeySql(TableChangeStruct.Table table){
+    private String getPrimaryKeySql(TableChangeStruct.Table table) {
         List<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChanges = table.getPrimaryKeyColumnChanges();
-        if (CollectionUtils.isNotEmpty(primaryKeyColumnChanges)){
+        if (CollectionUtils.isNotEmpty(primaryKeyColumnChanges)) {
             Set<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
                                                                           .map(primaryKeyColumnChangeColumn -> wrapQuote(primaryKeyColumnChangeColumn.getColumnName()))
                                                                           .collect(Collectors.toSet());
-            Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
-                    primaryKeyColumnChangeColumn -> StringUtils
-                            .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
-            if (primaryKeyColumnChange.isPresent()
-                    && StringUtils.equals(primaryKeyColumnChange.get().getAction().toUpperCase(), OpenGaussConstant.TABLE_PRIMARY_KEY_ADD)) {
+            Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream()
+                                                                                                               .filter(primaryKeyColumnChangeColumn -> StringUtils.isNotEmpty(
+                                                                                                                       primaryKeyColumnChangeColumn.getConstraintName()))
+                                                                                                               .findAny();
+            if (primaryKeyColumnChange.isPresent() &&
+                    StringUtils.equals(primaryKeyColumnChange.get().getAction().toUpperCase(), OpenGaussConstant.TABLE_PRIMARY_KEY_ADD)) {
                 return getPrimaryKeyAddByConstraintName(primaryKeyAddColumnNames, primaryKeyColumnChange.get().getConstraintName());
             }
         }
@@ -166,7 +160,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         if (!primaryKeySet.isEmpty()) {
             sb.append(StringUtils.LF);
             sb.append(OpenGaussConstant.TAB);
-            sb.append("PRIMARY KEY ");
+            sb.append(OpenGaussConstant.PRIMARY_KEY).append(StringUtils.SPACE);
             sb.append(addBrackets(StringUtils.join(primaryKeySet, OpenGaussConstant.COMMA)));
             sb.append(StringUtils.LF);
         }
@@ -174,46 +168,32 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
     }
 
     private String getPrimaryKeyAddByConstraintName(Set<String> columnNameList, String constraintName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(StringUtils.LF);
-        sb.append(OpenGaussConstant.TAB);
-        sb.append("CONSTRAINT ").append(constraintName).append(StringUtils.SPACE);
-        sb.append("PRIMARY KEY ");
-        sb.append(addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA)));
-        sb.append(StringUtils.LF);
-        return sb.toString();
+        return StringUtils.LF + OpenGaussConstant.TAB + OpenGaussConstant.CONSTRAINT + StringUtils.SPACE + wrapQuote(constraintName) +
+                StringUtils.SPACE + OpenGaussConstant.PRIMARY_KEY + StringUtils.SPACE +
+                addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA)) + StringUtils.LF;
     }
 
     private String getTableTitleSql(SourceStruct source) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(StringUtils.LF)
-          .append(OpenGaussConstant.TABLE_CREATE)
-          .append(StringUtils.SPACE)
-          .append("TABLE")
-          .append(StringUtils.SPACE)
-          .append(wrapQuote(source.getSchema()))
-          .append(OpenGaussConstant.DOT)
-          .append(wrapQuote(source.getTable()))
-          .append(StringUtils.LF);
-        return sb.toString();
+        return StringUtils.LF + OpenGaussConstant.TABLE_CREATE + StringUtils.SPACE + OpenGaussConstant.TABLE + StringUtils.SPACE +
+                wrapQuote(source.getSchema()) + OpenGaussConstant.DOT + wrapQuote(source.getTable()) + StringUtils.LF;
     }
 
     private String getColumnSqls(TableChangeStruct.column column) {
         StringBuilder sb = new StringBuilder();
         sb.append(OpenGaussConstant.TAB);
-        sb.append(wrapQuote(ColumnTypeConverter.convertTypeName(column.getName()))).append(StringUtils.SPACE);
-        sb.append(column.getTypeName())
-          .append(column.getLength() > NumberUtils.INTEGER_ZERO? addBrackets(column.getLength()) : StringUtils.EMPTY)
+        sb.append(wrapQuote(column.getName())).append(StringUtils.SPACE);
+        sb.append(ColumnTypeConverter.convertTypeName(column.getTypeName()))
+          .append(column.getLength() > NumberUtils.INTEGER_ZERO ? addBrackets(column.getLength()) : StringUtils.EMPTY)
           .append(StringUtils.SPACE);
-        if (StringUtils.isNotEmpty(column.getDefaultValueExpression())){
-            sb.append("DEFAULT ").append(column.getDefaultValueExpression()).append(StringUtils.SPACE);
+        if (StringUtils.isNotEmpty(column.getDefaultValueExpression())) {
+            sb.append(OpenGaussConstant.DEFAULT).append(StringUtils.SPACE).append(column.getDefaultValueExpression()).append(StringUtils.SPACE);
         }
-        sb.append(column.isOptional()? StringUtils.EMPTY : "NOT NULL");
+        sb.append(column.isOptional() ? StringUtils.EMPTY : OpenGaussConstant.NOT_NULL);
         return sb.toString();
     }
 
     @Override
-    public String convertToOpenGaussDDL(DDLValueStruct ddlValueStruct) {
-        return parse(ddlValueStruct);
+    public List<String> convertToOpenGaussDDL(DDLValueStruct ddlValueStruct) {
+        return Collections.singletonList(parse(ddlValueStruct));
     }
 }

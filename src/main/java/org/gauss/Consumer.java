@@ -4,17 +4,15 @@
 
 package org.gauss;
 
-import org.gauss.util.SCNProcessor;
-
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.gauss.util.SCNProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLOutput;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
@@ -127,6 +125,10 @@ public class Consumer {
                     System.out.println("--help cant used together with other parameters!");
                 case "--smartConversionOfObjectNames":
                     MigrationConfig.smartConversionOfObjectNames(true);
+                    break;
+                case "--indexPrefix":
+                    String indexPrefix = args[++i];
+                    MigrationConfig.setIndexPrefix(indexPrefix);
                     break;
                 default:
                     System.out.println("unrecognized config parameter: " + args[i] + "!");
