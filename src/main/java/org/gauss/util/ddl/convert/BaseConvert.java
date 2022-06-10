@@ -18,7 +18,7 @@ public abstract class BaseConvert implements DDLConvert {
     private QuoteCharacter quoteCharacter = QuoteCharacter.DOUBLE_QUOTE;
 
     public String wrapQuote(String s) {
-        if (s.toUpperCase().equalsIgnoreCase(s)) {
+        if (s.toLowerCase().equals(s) || s.toUpperCase().equals(s)) {
             s = s.toLowerCase();
         }
         return quoteCharacter.wrap(s);
