@@ -80,7 +80,7 @@ public class DDLCacheController {
             List<Long> beforeScn = new ArrayList<>();
             while (allScn.hasMoreElements()) {
                 Long cacheScn = allScn.nextElement();
-                if (cacheScn < scn) {
+                if (cacheScn <= scn) {
                     beforeScn.add(cacheScn);
                 }
             }
