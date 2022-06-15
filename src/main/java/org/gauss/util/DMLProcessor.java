@@ -57,7 +57,15 @@ public class DMLProcessor {
     public void process(KeyStruct key, DMLValueStruct value) {
         String op = value.getPayload().getOp();
         Envelope.Operation operation = Envelope.Operation.forCode(op);
-        Long currentScn = Long.valueOf(value.getPayload().getSource().getCommit_scn());
+        long currentScn;
+        String commit_scn = value.getPayload().getSource().getCommit_scn();
+        Long scn = value.getPayload().getSource().getScn();
+        if(commit_scn !=null && scn !=null) {
+            currentScn = Math.min(scn,Long.parseLong(commit_scn));
+        } else {
+            currentScn = Long.parseLong(commit_scn != null ? commit_scn : scn.toString());
+        }
+        LOGGER.info("currentScn: {}", currentScn);
         List<String> cacheDDlByScn = ddlCacheController.getCacheDDlByScn(currentScn);
         if (cacheDDlByScn.size() > 0) {
             // find ddl need to execute before
