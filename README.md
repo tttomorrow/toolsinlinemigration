@@ -43,6 +43,19 @@ java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name --from-beginning
 java -jar OnlineMigration-1.0-SNAPSHOT.jar --schema schema_name
 ```
 
+使用智能对象名称转换功能:
+```
+java -jar OnlineMigration-1.0-SNAPSHOT.jar --smartConversionOfObjectNames
+```
+
+当开启智能对象转义功能后,onlineMigration会对对象名做如下处理:
+
+| oracle   | openGauss |
+|----------|-----------|
+| Object_a | Object_a  |
+| OBJECT_A | object_a  |
+| object_a | object_a  |
+
 配置参数可在resources/consummer_setting.properties中修改后重新编译，或者自己创建新的properties文件并作为命令行参数传递给程序
 ```
 cp src/main/resources/consumer_setting.properties ./my_consumer_setting.properties

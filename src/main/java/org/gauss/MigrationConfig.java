@@ -35,6 +35,7 @@ public class MigrationConfig {
 
     private boolean writeSCN = false;
 
+    private boolean smartConversionOfObjectNames = false;
     private Properties consumerProps;
 
     private String consumerFilePath = null;
@@ -162,5 +163,13 @@ public class MigrationConfig {
                 INSTANCE.consumerProps.put(configName, fileProps.getProperty(configName));
             }
         }
+    }
+
+    public static void smartConversionOfObjectNames(boolean b) {
+        INSTANCE.smartConversionOfObjectNames = b;
+    }
+
+    public static boolean isSmartConversionOfObjectNames() {
+        return INSTANCE.smartConversionOfObjectNames;
     }
 }

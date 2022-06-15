@@ -4,6 +4,7 @@
 
 package org.gauss.util;
 
+import org.gauss.MigrationConfig;
 import org.gauss.common.DMLSQL;
 import org.gauss.jsonstruct.DMLValueStruct;
 import org.gauss.jsonstruct.FieldStruct;
@@ -243,10 +244,7 @@ public class DMLProcessor {
      * @return
      */
     public String getObjectNameForOpenGauss(String rawColumnName) {
-        if (rawColumnName.toLowerCase().equals(rawColumnName) || rawColumnName.toUpperCase().equals(rawColumnName)) {
-            rawColumnName = rawColumnName.toLowerCase();
-        }
-        rawColumnName = quoteCharacter.wrap(rawColumnName);
+        rawColumnName = quoteCharacter.wrap(ObjectNameConvertUtil.getObjectNameForOpenGauss(rawColumnName));
         return rawColumnName;
     }
 
