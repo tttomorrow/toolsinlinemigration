@@ -25,7 +25,7 @@ public class RenameTableConvert extends BaseConvert implements DDLConvert {
             String[] split = tableId.split("\\.");
             if (split.length == 3) {
                 String newTableName = split[2];
-                String schemaName = split[1];
+                String schemaName = ddlValueStruct.getPayload().getSource().getSchema();
                 String oldTableName = null;
                 int start = StringUtils.indexOfAny(ddl, "alter table", "ALTER TABLE");
                 int end = StringUtils.lastIndexOfAny(ddl, "rename to", "RENAME TO");
@@ -36,6 +36,8 @@ public class RenameTableConvert extends BaseConvert implements DDLConvert {
                     if (!s1.equalsIgnoreCase("alter") && !s1.equalsIgnoreCase("table")) {
                         if (s1.contains(".")) {
                             oldTableName = s1.split("\\.")[1];
+                        } else {
+                            oldTableName = s1;
                         }
                     }
                 }
