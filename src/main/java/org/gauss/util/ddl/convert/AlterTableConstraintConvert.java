@@ -3,6 +3,7 @@ package org.gauss.util.ddl.convert;
 import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.gauss.jsonstruct.DDLValueStruct;
 import org.gauss.jsonstruct.SourceStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
@@ -126,7 +127,6 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
           .append(wrapQuote(source.getSchema()))
           .append(OpenGaussConstant.DOT)
           .append(wrapQuote(source.getTable()));
-
         return sb.toString();
     }
 
@@ -171,10 +171,11 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
             List<String> primaryKeyAddColumnNames = primaryKeyColumnChanges.stream()
                                                                            .map(primaryKeyColumnChangeColumn -> wrapQuote(primaryKeyColumnChangeColumn.getColumnName()))
                                                                            .collect(Collectors.toList());
+            Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
+                    primaryKeyColumnChangeColumn -> StringUtils
+                            .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
+
             if (StringUtils.equals(action.toUpperCase(), OpenGaussConstant.TABLE_PRIMARY_KEY_ADD)) {
-                Optional<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChange = primaryKeyColumnChanges.stream().filter(
-                        primaryKeyColumnChangeColumn -> StringUtils
-                                .isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())).findAny();
                 if (primaryKeyColumnChange.isPresent()) {
                     primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames, alterTitleSql,
                                                               primaryKeyColumnChange.get().getConstraintName()));
@@ -186,8 +187,16 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
                 primaryKeySqlList.addAll(primaryKeyColumnChanges.stream().map(
                         primaryKeyColumnChangeColumn -> getPrimaryKeyDropSqL(tableName, primaryKeyColumnChangeColumn,
                                                                              alterTitleSql)).collect(Collectors.toSet()));
-                primaryKeySqlList.addAll(primaryKeyAddColumnNames.stream().map(columnName -> getColumnNullSql(columnName, alterTitleSql)).collect(
-                        Collectors.toSet()));
+                if (primaryKeyColumnChange.isPresent() && StringUtils.isNotEmpty(primaryKeyColumnChange.get().getConstraintName())) {
+                    if (StringUtils.equals(primaryKeyColumnChange.get().getType(), NumberUtils.INTEGER_ONE.toString())){
+                        primaryKeySqlList.addAll(primaryKeyAddColumnNames.stream().map(columnName -> getColumnNullSql(columnName, alterTitleSql)).collect(
+                                Collectors.toSet()));
+                    }
+                } else {
+                    primaryKeySqlList.addAll(primaryKeyAddColumnNames.stream().map(columnName -> getColumnNullSql(columnName, alterTitleSql)).collect(
+                            Collectors.toSet()));
+                }
+
             }
         }
         return primaryKeySqlList;

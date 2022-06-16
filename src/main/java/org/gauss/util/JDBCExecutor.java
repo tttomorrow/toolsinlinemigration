@@ -5,6 +5,8 @@
 package org.gauss.util;
 
 import org.gauss.MigrationConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -13,6 +15,8 @@ import java.sql.SQLException;
 import java.sql.PreparedStatement;
 
 public class JDBCExecutor {
+
+    private final Logger logger = LoggerFactory.getLogger(JDBCExecutor.class);
     private Connection connection;
 
     public JDBCExecutor() {
@@ -34,6 +38,7 @@ public class JDBCExecutor {
 
     public void executeDDL(String DDL_SQL) {
         try {
+            logger.info("execute ddl: {}", DDL_SQL);
             Statement statement = connection.createStatement();
             statement.execute(DDL_SQL);
             statement.close();

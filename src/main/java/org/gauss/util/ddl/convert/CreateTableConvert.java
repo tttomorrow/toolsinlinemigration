@@ -39,19 +39,19 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
     }
 
     private String convertCreateSqlToOpenGaussSql(TableChangeStruct tableChangeStruct, SourceStruct source) {
-        List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(column -> getColumnSqls(column))
+        List<String> columnSqls = tableChangeStruct.getTable().getColumns().stream().map(this::getColumnSqls)
                                                    .collect(Collectors.toList());
 
         String primaryKeySql = getPrimaryKeySql(tableChangeStruct.getTable());
 
         List<String> foreignKeySqls = tableChangeStruct.getTable().getForeignKeyColumns().stream()
-                                                       .map(foreignKeyColumn -> getForeignKeySql(foreignKeyColumn)).collect(Collectors.toList());
+                                                       .map(this::getForeignKeySql).collect(Collectors.toList());
 
         List<String> uniqueColumnSqls = tableChangeStruct.getTable().getUniqueColumns().stream()
-                                                         .map(uniqueColumn -> getUniqueSql(uniqueColumn)).collect(Collectors.toList());
+                                                         .map(this::getUniqueSql).collect(Collectors.toList());
 
         List<String> checkColumnSqls = tableChangeStruct.getTable().getCheckColumns().stream()
-                                                        .map(checkColumn -> getCheckSql(checkColumn)).collect(Collectors.toList());
+                                                        .map(this::getCheckSql).collect(Collectors.toList());
 
         StringBuilder sb = new StringBuilder();
         sb.append(getTableTitleSql(source))
@@ -136,6 +136,9 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
           .append(wrapQuote(foreignKeyColumn.getPktableName()))
           .append(StringUtils.SPACE)
           .append(addBrackets(pkColumnNameStr));
+        if (StringUtils.isNotEmpty(foreignKeyColumn.getCascade())) {
+            sb.append(StringUtils.SPACE).append(foreignKeyColumn.getCascade());
+        }
         return sb.toString();
     }
 

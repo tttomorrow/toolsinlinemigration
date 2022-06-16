@@ -22,11 +22,13 @@ public final class DDLConvertHandler {
     private DDLConvertHandler() {
     }
 
-    private static boolean isAlterNeedParseSql(TableChangeStruct tableChangeStruct) {
+    public static boolean isAlterNeedParseSql(TableChangeStruct tableChangeStruct){
         TableChangeStruct.Table table = tableChangeStruct.getTable();
         if (table != null && StringUtils.equals(tableChangeStruct.getType(), OpenGaussConstant.TABLE_ALTER)) {
-            return (CollectionUtils.isNotEmpty(table.getPrimaryKeyColumnChanges())) ||
-                    CollectionUtils.isNotEmpty(getColumnChanges(table.getColumns()));
+            return (CollectionUtils.isNotEmpty(table.getPrimaryKeyColumnChanges()))
+                    || CollectionUtils.isNotEmpty(table.getCheckColumns())
+                    || CollectionUtils.isNotEmpty(table.getUniqueColumns())
+                    || CollectionUtils.isNotEmpty(getColumnChanges(table.getColumns()));
         }
         return Boolean.FALSE;
     }
@@ -51,6 +53,6 @@ public final class DDLConvertHandler {
         } else if (payload.getTableChanges().stream().anyMatch((DDLConvertHandler::isAlterNeedParseSql))) {
             return new AlterTableConstraintConvert();
         }
-        return ddlValueStruct -> null;
+        return ddlValueStruct -> ddlValueStruct.getPayload().getDdl();
     }
 }

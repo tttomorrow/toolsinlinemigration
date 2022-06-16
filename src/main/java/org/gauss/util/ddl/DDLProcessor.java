@@ -45,11 +45,13 @@ public class DDLProcessor extends Processor {
 
         String openGaussDDL = DDLConvertHandler.getDDlConvert(value.getPayload()).convertToOpenGaussDDL(value);
         // when get ddl sql ,if sql contains rename table ,drop table, drop column , must compare current dml scn and ddl scn
-        if (null != openGaussDDL && needCache(value.getPayload())) {
-            LOGGER.info("add ddl sql: {} to cache,ddl_scn: {}", openGaussDDL, source.getCommit_scn());
-            ddlCacheController.addDdl(Long.valueOf(source.getCommit_scn()), openGaussDDL);
-        } else {
-            ddlExecutor.executeDDL(openGaussDDL);
+        if (null != openGaussDDL) {
+            if (needCache(value.getPayload())) {
+                LOGGER.info("add ddl sql: {} to cache,ddl_scn: {}", openGaussDDL, source.getCommit_scn());
+                ddlCacheController.addDdl(Long.valueOf(source.getCommit_scn()), openGaussDDL);
+            } else {
+                ddlExecutor.executeDDL(openGaussDDL);
+            }
         }
     }
 
