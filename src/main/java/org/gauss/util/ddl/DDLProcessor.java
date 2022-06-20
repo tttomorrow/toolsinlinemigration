@@ -47,7 +47,17 @@ public class DDLProcessor extends Processor {
         // when get ddl sql ,if sql contains rename table ,drop table, drop column , must compare current dml scn and ddl scn
         if (null != openGaussDDL) {
             if (needCache(value.getPayload())) {
-                LOGGER.info("add ddl sql: {} to cache,ddl_scn: {}", openGaussDDL, source.getCommit_scn());
+                // some time the field commit_scn will be null ,so we use scn field, if scn and commit_scn both have value, we use Math.min(scn,
+                // commit_scn) as value
+                long currentScn;
+                String commit_scn = value.getPayload().getSource().getCommit_scn();
+                Long scn = value.getPayload().getSource().getScn();
+                if (commit_scn != null && scn != null) {
+                    currentScn = Math.min(scn, Long.parseLong(commit_scn));
+                } else {
+                    currentScn = commit_scn != null ? Long.parseLong(commit_scn) : scn;
+                }
+                LOGGER.info("add ddl sql: {} to cache,ddl_scn: {}", openGaussDDL, currentScn);
                 ddlCacheController.addDdl(Long.valueOf(source.getCommit_scn()), openGaussDDL);
             } else {
                 ddlExecutor.executeDDL(openGaussDDL);
