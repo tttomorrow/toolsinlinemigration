@@ -58,7 +58,7 @@ public class DDLProcessor extends Processor {
                     currentScn = commit_scn != null ? Long.parseLong(commit_scn) : scn;
                 }
                 LOGGER.info("add ddl sql: {} to cache,ddl_scn: {}", openGaussDDL, currentScn);
-                ddlCacheController.addDdl(Long.valueOf(source.getCommit_scn()), openGaussDDL);
+                ddlCacheController.addDdl(currentScn, openGaussDDL);
             } else {
                 ddlExecutor.executeDDL(openGaussDDL);
             }
