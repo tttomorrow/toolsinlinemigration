@@ -15,4 +15,6 @@ public class DMLSQL {
 
     // truncate table sql
     public static final String TRUNCATE_SQL = "TRUNCATE TABLE %s";
+
+    public static final String TRUNCATE_CASCADE_SQL = "TRUNCATE TABLE %s CASCADE";
 }
