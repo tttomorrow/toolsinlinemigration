@@ -4,7 +4,6 @@
 
 package org.gauss.util;
 
-import org.gauss.MigrationConfig;
 import org.gauss.common.DMLSQL;
 import org.gauss.jsonstruct.DMLValueStruct;
 import org.gauss.jsonstruct.FieldStruct;
@@ -74,11 +73,9 @@ public class DMLProcessor {
         }
         // We assume that table struct don't change. This assumption may be changed
         // in the future.
-//        if (columnInfos.size() == 0) {
-            initKeyColumnInfos(key);
-            initColumnInfos(value);
-            initTableIdentity(value);
-//        }
+        initColumnInfos(value);
+        initKeyColumnInfos(key);
+        initTableIdentity(value);
 
         PreparedStatement statement;
         switch (operation) {
@@ -167,9 +164,17 @@ public class DMLProcessor {
         keyColumnInfos.clear();
         List<FieldStruct> keyColumnFields = key.getSchema().getFields();
         for (FieldStruct keyColField : keyColumnFields) {
-            ColumnInfo keyColumnInfo = new ColumnInfo(
-                    keyColField.getField(), keyColField.getType(), keyColField.getName(), keyColField.getParameters());
-            keyColumnInfos.add(keyColumnInfo);
+            //check if key field not in columnsInfo , we should skip it;
+            for (ColumnInfo columnInfo : columnInfos) {
+                if (columnInfo.getName().equals(keyColField.getField())) {
+                    ColumnInfo keyColumnInfo = new ColumnInfo(keyColField.getField(),
+                                                              keyColField.getType(),
+                                                              keyColField.getName(),
+                                                              keyColField.getParameters());
+                    keyColumnInfos.add(keyColumnInfo);
+                    break;
+                }
+            }
         }
     }
 
