@@ -38,6 +38,7 @@ public class DMLProcessor {
     private String updateSQL = null;
     private String deleteSQL = null;
     private String truncateSQL = null;
+    private String truncateCascadeSQL = null;
 
     private int insertCount = 0;
     private int updateCount = 0;
@@ -104,6 +105,10 @@ public class DMLProcessor {
                 statement = getTruncateStatement(key, value);
                 LOGGER.info("TRUNCATE SQL in {}.", table);
                 break;
+            case TRUNCATE_CASCADE:
+                statement = getTruncateCascadeStatement(key, value);
+                LOGGER.info("TRUNCATE SQL in {}.", table);
+                break;
             default:
                 // May be truncate. Truncate operation is not used in debezium-connector-oracle.
                 statement = null;
@@ -129,7 +134,19 @@ public class DMLProcessor {
         try {
             return executor.getConnection().prepareStatement(truncateSQL);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    private PreparedStatement getTruncateCascadeStatement(KeyStruct key, DMLValueStruct value) {
+        if (null == truncateCascadeSQL) {
+            initTruncateCascadeSQL();
+        }
+        try {
+            return executor.getConnection().prepareStatement(truncateCascadeSQL);
+        } catch (SQLException e) {
+            LOGGER.error(e.getMessage(), e);
         }
         return null;
     }
@@ -205,6 +222,9 @@ public class DMLProcessor {
 
     private void initTruncateSQL() {
         truncateSQL = String.format(DMLSQL.TRUNCATE_SQL, tableIdentity);
+    }
+    private void initTruncateCascadeSQL() {
+        truncateSQL = String.format(DMLSQL.TRUNCATE_CASCADE_SQL, tableIdentity);
     }
 
     private String getWhereClause(KeyStruct key, DMLValueStruct value,
