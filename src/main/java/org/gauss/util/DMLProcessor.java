@@ -11,7 +11,6 @@ import org.gauss.parser.Parser;
 import org.gauss.jsonstruct.KeyStruct;
 import org.gauss.parser.ParserContainer;
 
-import io.debezium.data.Envelope;
 
 import org.gauss.util.ddl.DDLCacheController;
 import org.slf4j.Logger;
@@ -56,7 +55,8 @@ public class DMLProcessor {
 
     public void process(KeyStruct key, DMLValueStruct value) {
         String op = value.getPayload().getOp();
-        Envelope.Operation operation = Envelope.Operation.forCode(op);
+        // using custom operation enum,fix using debezium-core dependency from github
+        Operation operation = Operation.forCode(op);
         long currentScn;
         String commit_scn = value.getPayload().getSource().getCommit_scn();
         Long scn = value.getPayload().getSource().getScn();
@@ -106,6 +106,7 @@ public class DMLProcessor {
                 statement = getTruncateCascadeStatement(key, value);
                 LOGGER.info("TRUNCATE SQL in {}.", table);
                 break;
+            case NOT_SUPPORT:
             default:
                 // May be truncate. Truncate operation is not used in debezium-connector-oracle.
                 statement = null;
@@ -376,6 +377,58 @@ public class DMLProcessor {
             return parser.parse(colInfo.getParameters(), colValue);
         } else {
             return colValue;
+        }
+    }
+
+
+    public enum Operation {
+        READ("r"),
+        /**
+         * An operation that resulted in a new record being created in the source.
+         */
+        CREATE("c"),
+        /**
+         * An operation that resulted in an existing record being updated in the source.
+         */
+        UPDATE("u"),
+        /**
+         * An operation that resulted in an existing record being removed from or deleted in the source.
+         */
+        DELETE("d"),
+        /**
+         * An operation that resulted in an existing table being truncated in the source.
+         */
+        TRUNCATE("t"),
+        /**
+         * An operation that resulted in an existing table being truncated cascade in the source.
+         */
+        TRUNCATE_CASCADE("tc"),
+        /**
+         * An operation that resulted in a generic message
+         */
+        MESSAGE("m"),
+        /**
+         * Not support operation
+         */
+        NOT_SUPPORT("");
+
+        private final String code;
+
+        private Operation(String code) {
+            this.code = code;
+        }
+
+        public static Operation forCode(String code) {
+            for (Operation op : Operation.values()) {
+                if (op.code().equalsIgnoreCase(code)) {
+                    return op;
+                }
+            }
+            return NOT_SUPPORT;
+        }
+
+        public String code() {
+            return code;
         }
     }
 }
