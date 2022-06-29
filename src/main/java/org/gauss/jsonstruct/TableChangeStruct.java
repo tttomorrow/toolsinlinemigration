@@ -4,6 +4,7 @@
 
 package org.gauss.jsonstruct;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TableChangeStruct {
@@ -138,10 +139,10 @@ public class TableChangeStruct {
 
     public static class Table {
         private List<String> primaryKeyColumnNames;
-        private List<PrimaryKeyColumnChange> primaryKeyColumnChanges;
-        private List<IndexColumn> uniqueColumns;
-        private List<CheckColumn> checkColumns;
-        private List<ForeignKeyColumn> foreignKeyColumns;
+        private List<PrimaryKeyColumnChange> primaryKeyColumnChanges = new ArrayList<>();
+        private List<IndexColumn> uniqueColumns = new ArrayList<>();
+        private List<CheckColumn> checkColumns= new ArrayList<>();
+        private List<ForeignKeyColumn> foreignKeyColumns = new ArrayList<>();
         private List<column> columns;
 
         public List<String> getPrimaryKeyColumnNames() {
