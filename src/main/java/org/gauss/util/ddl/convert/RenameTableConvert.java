@@ -24,27 +24,19 @@ public class RenameTableConvert extends BaseConvert implements DDLConvert {
             String tableId = ddlValueStruct.getPayload().getTableChanges().get(0).getId();
             String[] split = tableId.split("\\.");
             if (split.length == 3) {
-                String newTableName = split[2];
                 String schemaName = ddlValueStruct.getPayload().getSource().getSchema();
-                String oldTableName = null;
-                int start = StringUtils.indexOfAny(ddl, "alter table", "ALTER TABLE");
-                int end = StringUtils.lastIndexOfAny(ddl, "rename to", "RENAME TO");
-                oldTableName = ddl.substring(start, end).trim();
-                oldTableName = oldTableName.replaceAll("\\s+", " ");
-                String[] s = oldTableName.split(" ");
-                for (String s1 : s) {
-                    if (!s1.equalsIgnoreCase("alter") && !s1.equalsIgnoreCase("table")) {
-                        if (s1.contains(".")) {
-                            oldTableName = s1.split("\\.")[1];
-                        } else {
-                            oldTableName = s1;
-                        }
+                String newTableName = unwrapQuote(split[2]);
+                String[] tableNames = ddlValueStruct.getPayload().getSource().getTable().split(",");
+                String oldTableName = "";
+                for (String tableName : tableNames) {
+                    if(!tableName.equals(newTableName)) {
+                        oldTableName = tableName;
                     }
                 }
                 return String.format("ALTER TABLE %s.%s RENAME TO %s",
-                                     wrapQuote(unwrapQuote(schemaName)),
-                                     wrapQuote(unwrapQuote(oldTableName)),
-                                     wrapQuote(unwrapQuote(newTableName)));
+                                     wrapQuote(schemaName),
+                                     wrapQuote(oldTableName),
+                                     wrapQuote(newTableName));
             }
         }
         return null;
