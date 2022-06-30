@@ -104,7 +104,7 @@ public class DMLProcessor {
                 break;
             case TRUNCATE_CASCADE:
                 statement = getTruncateCascadeStatement(key, value);
-                LOGGER.info("TRUNCATE SQL in {}.", table);
+                LOGGER.info("TRUNCATE CASCADE  SQL in {}.", table);
                 break;
             case NOT_SUPPORT:
             default:
@@ -230,7 +230,7 @@ public class DMLProcessor {
         truncateSQL = String.format(DMLSQL.TRUNCATE_SQL, tableIdentity);
     }
     private void initTruncateCascadeSQL() {
-        truncateSQL = String.format(DMLSQL.TRUNCATE_CASCADE_SQL, tableIdentity);
+        truncateCascadeSQL = String.format(DMLSQL.TRUNCATE_CASCADE_SQL, tableIdentity);
     }
 
     private String getWhereClause(KeyStruct key, DMLValueStruct value,
