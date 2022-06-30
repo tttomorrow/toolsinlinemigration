@@ -206,7 +206,7 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append("ALTER COLUMN ");
-        sb.append(columnName).append(StringUtils.SPACE);
+        sb.append(wrapQuote(columnName)).append(StringUtils.SPACE);
         sb.append("DROP NOT NULL");
         return sb.toString();
     }
