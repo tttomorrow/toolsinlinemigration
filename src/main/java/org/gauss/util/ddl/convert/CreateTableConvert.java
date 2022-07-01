@@ -81,7 +81,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         sb.append(StringUtils.LF);
         sb.append(OpenGaussConstant.TAB);
         sb.append("CONSTRAINT ");
-        sb.append(wrapQuote(uniqueColumn.getIndexName())).append(StringUtils.SPACE);
+        sb.append(uniqueColumn.getIndexName()).append(StringUtils.SPACE);
         sb.append("UNIQUE ");
         sb.append(StringUtils.SPACE)
           .append(addBrackets(wrapQuote(uniqueColumn.getColumnName())));
@@ -93,7 +93,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         sb.append(StringUtils.LF);
         sb.append(OpenGaussConstant.TAB);
         sb.append("CONSTRAINT ");
-        sb.append(wrapQuote(checkColumn.getIndexName())).append(StringUtils.SPACE);
+        sb.append(checkColumn.getIndexName()).append(StringUtils.SPACE);
         sb.append("CHECK ");
         sb.append(StringUtils.SPACE)
           .append(addBrackets(checkColumn.getCondition()));
@@ -122,7 +122,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         sb.append(StringUtils.LF);
         sb.append(OpenGaussConstant.TAB);
         sb.append("CONSTRAINT ");
-        sb.append(wrapQuote(foreignKeyColumn.getFkName())).append(StringUtils.SPACE);
+        sb.append(foreignKeyColumn.getFkName()).append(StringUtils.SPACE);
         sb.append("FOREIGN KEY ");
         sb.append(StringUtils.SPACE)
           .append(addBrackets(fkColumnNameStr))
