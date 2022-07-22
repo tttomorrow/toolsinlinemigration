@@ -9,6 +9,7 @@ import org.gauss.jsonstruct.SourceStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
 import org.gauss.util.OpenGaussConstant;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,11 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
         if (CollectionUtils.isNotEmpty(table.getCheckColumns())) {
             return  StringUtils.join(checkChangeSql(table.getCheckColumns(),
                                                     getTableAlterTitleSql(source)), OpenGaussConstant.SEMICOLON);
+        }
+
+        if (CollectionUtils.isNotEmpty(table.getForeignKeyColumns())) {
+            return  StringUtils.join(foreignKeySql(table.getForeignKeyColumns(),
+                getTableAlterTitleSql(source)), OpenGaussConstant.SEMICOLON);
         }
 
         List<TableChangeStruct.column> columnChanges = getColumnChanges(table.getColumns());
@@ -230,6 +236,52 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
         sb.append("CONSTRAINT ").append(constraintName).append(StringUtils.SPACE);
         sb.append("UNIQUE ");
         sb.append(addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA)));
+        return sb.toString();
+    }
+
+    private List<String> foreignKeySql(List<TableChangeStruct.ForeignKeyColumn> foreignKeyColumns, String alterTitleSql){
+        return foreignKeyColumns.stream().map(foreignKeyColumn -> getForeignKeySql(foreignKeyColumn, alterTitleSql)).collect(Collectors.toList());
+    }
+    
+    private String getForeignKeySql(TableChangeStruct.ForeignKeyColumn foreignKeyColumn, String alterTitleSql) {
+
+        String fkColumnNameStr = wrapQuote(foreignKeyColumn.getFkColumnName());
+        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(OpenGaussConstant.COMMA))){
+            fkColumnNameStr =
+                StringUtils.join(Arrays.stream(foreignKeyColumn.getFkColumnName().split(String.valueOf(OpenGaussConstant.COMMA)))
+                        .map(this::wrapQuote).collect(Collectors.toList()),
+                    String.valueOf(OpenGaussConstant.COMMA));
+        }
+
+        String pkColumnNameStr = wrapQuote(foreignKeyColumn.getPkColumnName());
+        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(OpenGaussConstant.COMMA))){
+            pkColumnNameStr =
+                StringUtils.join(Arrays.stream(foreignKeyColumn.getPkColumnName().split(String.valueOf(OpenGaussConstant.COMMA)))
+                        .map(this::wrapQuote).collect(Collectors.toList()),
+                    String.valueOf(OpenGaussConstant.COMMA));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(alterTitleSql).append(StringUtils.SPACE);
+        sb.append(OpenGaussConstant.TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);;
+        sb.append("CONSTRAINT ");
+        sb.append(foreignKeyColumn.getFkName()).append(StringUtils.SPACE);
+        sb.append("FOREIGN KEY ");
+        sb.append(StringUtils.SPACE)
+            .append(addBrackets(fkColumnNameStr))
+            .append(StringUtils.SPACE);
+        sb.append(StringUtils.LF);
+        sb.append(OpenGaussConstant.TAB);
+        sb.append("REFERENCES ");
+        sb.append(StringUtils.SPACE)
+            .append(wrapQuote(foreignKeyColumn.getPktableSchem()))
+            .append(OpenGaussConstant.DOT)
+            .append(wrapQuote(foreignKeyColumn.getPktableName()))
+            .append(StringUtils.SPACE)
+            .append(addBrackets(pkColumnNameStr));
+        if (StringUtils.isNotEmpty(foreignKeyColumn.getCascade())) {
+            sb.append(StringUtils.SPACE).append(foreignKeyColumn.getCascade());
+        }
         return sb.toString();
     }
 }
