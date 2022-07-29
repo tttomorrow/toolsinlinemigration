@@ -28,6 +28,7 @@ public final class DDLConvertHandler {
             return (CollectionUtils.isNotEmpty(table.getPrimaryKeyColumnChanges()))
                     || CollectionUtils.isNotEmpty(table.getCheckColumns())
                     || CollectionUtils.isNotEmpty(table.getUniqueColumns())
+                    || CollectionUtils.isNotEmpty(table.getForeignKeyColumns())
                     || CollectionUtils.isNotEmpty(getColumnChanges(table.getColumns()));
         }
         return Boolean.FALSE;
