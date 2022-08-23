@@ -13,14 +13,40 @@ import org.gauss.parser.ParserContainer;
 
 
 import org.gauss.util.ddl.DDLCacheController;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.XML;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.Map.Entry;
+
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 
 public class DMLProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DMLProcessor.class);
@@ -33,7 +59,6 @@ public class DMLProcessor {
     private String tableIdentity;
     private String table;
     private String insertSQL = null;
-    private String updateSQL = null;
     private String deleteSQL = null;
     private String truncateSQL = null;
     private String truncateCascadeSQL = null;
@@ -211,17 +236,6 @@ public class DMLProcessor {
         LOGGER.info(insertSQL);
     }
 
-    private void initUpdateSQL() {
-        int n = columnInfos.size();
-        String[] columnNameValues = new String[n];
-        for (int i = 0; i < n; ++i) {
-            String rawColumnName = columnInfos.get(i).getName();
-            columnNameValues[i] = getObjectNameForOpenGauss(rawColumnName)+ " = ?";
-        }
-        String nameValues = String.join(", ", columnNameValues);
-        updateSQL = String.format(DMLSQL.UPDATE_SQL, tableIdentity, nameValues);
-    }
-
     private void initDeleteSQL() {
         deleteSQL = String.format(DMLSQL.DELETE_SQL, tableIdentity);
     }
@@ -238,8 +252,7 @@ public class DMLProcessor {
         // If there has primary key, we use key column in where clause.
         // Or we use all column in where clause.
         List<ColumnInfo> identifyColInfos = keyColumnInfos.size() > 0 ? keyColumnInfos : columnInfos;
-        Map<String, Object> identifyColValues = keyColumnInfos.size() > 0 ?
-                key.getPayload() : value.getPayload().getBefore();
+        Map<String, Object> identifyColValues = value.getPayload().getBefore();
 
         List<String> whereSQL = new ArrayList<>();
         for (ColumnInfo columnInfo : identifyColInfos) {
@@ -291,36 +304,186 @@ public class DMLProcessor {
         Map<String, Object> insertValues = value.getPayload().getAfter();
         for (ColumnInfo columnInfo : columnInfos) {
             String columnName = columnInfo.getName();
-            columnValues.add(insertValues.get(columnName));
+            columnValues.add(convertColumnValues(columnInfo.getSemanticType(), insertValues.get(columnName)));
         }
 
         return getStatement(insertSQL, columnInfos, columnValues);
     }
 
     private PreparedStatement getUpdateStatement(KeyStruct key, DMLValueStruct value) {
-        if (updateSQL == null) {
-            initUpdateSQL();
-        }
-
         // Get new value after updated.
         List<ColumnInfo> columnInSQL = new ArrayList<>();
         List<Object> valueInSQL = new ArrayList<>();
         Map<String, Object> afterValues = value.getPayload().getAfter();
+        Map<String, Object> beforeValues = value.getPayload().getBefore();
+        ArrayList<String> columnNameValues = new ArrayList<>();
         for (ColumnInfo colInfo : columnInfos) {
             String colName = colInfo.getName();
-            columnInSQL.add(colInfo);
-            valueInSQL.add(afterValues.get(colName));
+            Object afterVal = afterValues.get(colName);
+            Object beforeVal = beforeValues.get(colName);
+            if (!Objects.equals(afterVal, beforeVal)) {
+                columnNameValues.add(getObjectNameForOpenGauss(colName) + " = ?");
+                columnInSQL.add(colInfo);
+                valueInSQL.add(convertColumnValues(colInfo.getSemanticType(), afterValues.get(colName)));
+            }
         }
+        String nameValues = String.join(", ", columnNameValues);
+        String sql = String.format(DMLSQL.UPDATE_SQL, tableIdentity, nameValues);
 
         List<ColumnInfo> whereColInfos = new ArrayList<>();
         List<Object> whereColValues = new ArrayList<>();
         String whereClause = getWhereClause(key, value, whereColInfos, whereColValues);
-        String completeUpdateSQL = updateSQL + whereClause;
+        String completeUpdateSQL = sql + whereClause;
         LOGGER.info("UPDATE SQL:{}",completeUpdateSQL);
         columnInSQL.addAll(whereColInfos);
         valueInSQL.addAll(whereColValues);
 
         return getStatement(completeUpdateSQL, columnInSQL, valueInSQL);
+    }
+
+    private Object convertColumnValues(String semanticType, Object value) {
+        if (value == null){
+            return null;
+        }
+        if ("LONG RAW".equals((semanticType))) {
+            return "\\x" + value;
+        }
+        else if ("UDT".equalsIgnoreCase(semanticType)) {
+            String xml = trimXml((String) value);
+            JSONObject jsonObject = XML.toJSONObject(xml);
+            jsonObject = new JSONObject(trimJson(jsonObject));
+
+            Map<String, Object> map = jsonObject.toMap();
+            if (map.size() != 1) {
+                throw new RuntimeException("Unexpected XML content: multiple roots.");
+            }
+            Entry<String, Object> p = map.entrySet().iterator().next();
+            if ("".equals(p.getValue())) {
+                return "{}";
+            }
+            return new JSONObject((Map<String, Object>)p.getValue()).toString();
+        }
+        else if ("Array".equalsIgnoreCase(semanticType)) {
+            String xml = trimXml((String) value);
+
+            JSONObject jsonObject = XML.toJSONObject(xml);
+            jsonObject = new JSONObject(trimJson(jsonObject));
+
+            Set<String> keySet = jsonObject.keySet();
+            if (keySet.size() != 1) {
+                throw new RuntimeException("Unexpected XML content: multiple roots.");
+            }
+            String key = keySet.iterator().next();
+
+            Object o = jsonObject.get(key);
+            if (o instanceof JSONArray) {
+                return ((JSONArray) o).toString();
+            } else if (o instanceof JSONObject) {
+                jsonObject = (JSONObject) o;
+                keySet = jsonObject.keySet();
+                if (keySet.size() != 1) {
+                    throw new RuntimeException("Unexpected XML content: multiple roots of an object.");
+                }
+                key = keySet.iterator().next();
+                o = jsonObject.get(key);
+                JSONArray jA = null;
+                if (o instanceof JSONArray) {
+                    jA = (JSONArray) o;
+                } else if ("".equals(o)) {
+                    return "[{}]";
+                } else {
+                    jA = new JSONArray();
+                    jA.put(o);
+                }
+                return jA.toString();
+            } else {
+                if (!"".equals(o)) {
+                    throw new RuntimeException("Unexpected XML content: unrecognized object type: "
+                        + o.getClass() + ", expecting JSONObject, JSONArray or empty String.");
+                }
+                return "[]";
+            }
+        }
+        else {
+            return value;
+        }
+    }
+
+    private static void trimArray(Set<Wrap> toBeTrimmed, Wrap parent, Wrap me) {
+        if (me.obj instanceof Map<?, ?>) {
+            Map<String, Wrap> map = (Map<String, Wrap>) me.obj;
+            for (Entry<String, Wrap> entry : map.entrySet()) {
+                trimArray(toBeTrimmed, me, entry.getValue());
+            }
+        } else if (me.obj instanceof List<?>) {
+            List<Wrap> list = (List<Wrap>) me.obj;
+            toBeTrimmed.add(parent);
+            for (Wrap e : list) {
+                trimArray(toBeTrimmed, me, e);
+            }
+        }
+    }
+
+    private static String trimJson(JSONObject jsonObject) {
+        Map<String, Object> map = jsonObject.toMap();
+        Set<Wrap> toBeTrimmed = new HashSet<>();
+        Wrap wrapped = Wrap.wrap(map);
+        trimArray(toBeTrimmed, null, wrapped);
+        for (Wrap w : toBeTrimmed) {
+            if (!(w.obj instanceof Map<?, ?>)) {
+                throw new RuntimeException("Unexpected inner object.");
+            }
+            Map<String, Wrap> m = (Map<String, Wrap>) w.obj;
+            if (m.size() != 1) {
+                throw new RuntimeException("Unexpected item.");
+            }
+            Wrap child = m.entrySet().iterator().next().getValue();
+            if (!(child.obj instanceof List<?>)) {
+                throw new RuntimeException("Unexpected inner object, should be list.");
+            }
+            w.obj = child;
+        }
+        Object unwrapped = Wrap.unwrap(wrapped);
+        if (unwrapped instanceof Map<?, ?>)
+            return new JSONObject((Map<String, Object>) unwrapped).toString();
+        else
+            throw new RuntimeException("type error");
+    }
+
+    private static String trimXml(String xml) {
+        StringWriter writer = new StringWriter();
+        try {
+            Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+                    .parse(new InputSource(new StringReader(
+                            xml.replaceAll("<\\?.*\\?>", "<?xml version='1.0'?>"))));
+
+            XPathExpression expression = XPathFactory.newInstance().newXPath().compile("//*[@typename or @schemaname]");
+            NodeList nodes = (NodeList) expression.evaluate(document, XPathConstants.NODESET);
+            if (nodes.getLength() > 0) {
+                for (int i = 0; i < nodes.getLength(); i++) {
+                    Node n = nodes.item(i);
+                    if (n instanceof Element) {
+                        Element el = (Element) n;
+                        el.removeAttribute("typename");
+                        el.removeAttribute("schemaname");
+                    }
+                }
+            }
+
+            Transformer t = TransformerFactory.newInstance().newTransformer();
+            t.transform(new DOMSource(document), new StreamResult(writer));
+
+            return writer.getBuffer().toString();
+        } catch (Exception e) {
+            // Trim failed
+            return xml;
+        } finally {
+            try {
+                writer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private PreparedStatement getDeleteStatement(KeyStruct key, DMLValueStruct value) {
@@ -425,6 +588,57 @@ public class DMLProcessor {
 
         public String code() {
             return code;
+        }
+    }
+}
+
+class Wrap {
+
+    public Object obj;
+
+    public Wrap(Object o) {
+        obj = o;
+    }
+
+    public static Wrap wrap(Object obj) {
+        if (obj instanceof Map<?, ?>) {
+            Map<String, ?> map = (Map<String, ?>) obj;
+            Map<String, Wrap> newMap = new HashMap<>();
+            for (Entry<String, ?> entry : map.entrySet()) {
+                newMap.put(entry.getKey(), wrap(entry.getValue()));
+            }
+            return new Wrap(newMap);
+        } else if (obj instanceof List<?>) {
+            List<?> list = (List<?>) obj;
+            List<Wrap> newList = new ArrayList<>();
+            for (Object e : list) {
+                newList.add(wrap(e));
+            }
+            return new Wrap(newList);
+        } else {
+            return new Wrap(obj);
+        }
+    }
+
+    public static Object unwrap(Wrap wrap) {
+        if (wrap.obj instanceof Map<?, ?>) {
+            Map<String, Wrap> map = (Map<String, Wrap>) wrap.obj;
+            Map<String, Object> newMap = new HashMap<>();
+            for (Entry<String, Wrap> entry : map.entrySet()) {
+                newMap.put(entry.getKey(), unwrap(entry.getValue()));
+            }
+            return newMap;
+        } else if (wrap.obj instanceof List<?>) {
+            List<Wrap> list = (List<Wrap>) wrap.obj;
+            List<Object> newList = new ArrayList<>();
+            for (Wrap w : list) {
+                newList.add(unwrap(w));
+            }
+            return newList;
+        } else if (wrap.obj instanceof Wrap) {
+            return unwrap((Wrap) wrap.obj);
+        } else {
+            return wrap.obj;
         }
     }
 }
