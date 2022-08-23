@@ -4,6 +4,8 @@
 
 package org.gauss.jsonstruct;
 
+import org.apache.commons.collections4.CollectionUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -137,43 +139,87 @@ public class TableChangeStruct {
         }
     }
 
+    public static class ChangeColumn {
+        private List<String> addColumn = new ArrayList<>();
+        private List<String> modifyColumn = new ArrayList<>();
+        private List<String> dropColumn = new ArrayList<>();
+
+        public boolean hasChangeColumn() {
+            return CollectionUtils.isNotEmpty(addColumn) || CollectionUtils.isNotEmpty(modifyColumn) || CollectionUtils.isNotEmpty(dropColumn);
+        }
+
+        public List<String> getAddColumn() {
+            return addColumn;
+        }
+
+        public void setAddColumn(List<String> addColumn) {
+            this.addColumn = addColumn;
+        }
+
+        public List<String> getModifyColumn() {
+            return modifyColumn;
+        }
+
+        public void setModifyColumn(List<String> modifyColumn) {
+            this.modifyColumn = modifyColumn;
+        }
+
+        public List<String> getDropColumn() {
+            return dropColumn;
+        }
+
+        public void setDropColumn(List<String> dropColumn) {
+            this.dropColumn = dropColumn;
+        }
+    }
+
     public static class Table {
         private List<String> primaryKeyColumnNames;
+        private List<String> primaryConstraintName = new ArrayList<>();
         private List<PrimaryKeyColumnChange> primaryKeyColumnChanges = new ArrayList<>();
         private List<IndexColumn> uniqueColumns = new ArrayList<>();
-        private List<CheckColumn> checkColumns= new ArrayList<>();
+        private List<CheckColumn> checkColumns = new ArrayList<>();
         private List<ForeignKeyColumn> foreignKeyColumns = new ArrayList<>();
         private List<column> columns;
-
+        /**
+         * if alter table changing column, the column name will in this field
+         */
+        private ChangeColumn changeColumns = new ChangeColumn();
+        private IndexChanges indexChanges;
+        public IndexChanges getIndexChanges() {
+            return indexChanges;
+        }
+        public void setIndexChanges(IndexChanges indexChanges) {
+            this.indexChanges = indexChanges;
+        }
+        public ChangeColumn getChangeColumns() {
+            return changeColumns;
+        }
+        public void setChangeColumns(ChangeColumn changeColumns) {
+            this.changeColumns = changeColumns;
+        }
         public List<String> getPrimaryKeyColumnNames() {
             return primaryKeyColumnNames;
         }
-
         public List<PrimaryKeyColumnChange> getPrimaryKeyColumnChanges() {
             return primaryKeyColumnChanges;
         }
-
         public void setPrimaryKeyColumnNames(List<String> primaryKeyColumnNames) {
             this.primaryKeyColumnNames = primaryKeyColumnNames;
         }
-
         public List<IndexColumn> getUniqueColumns() {
             return uniqueColumns;
         }
-
         public List<CheckColumn> getCheckColumns() {
             return checkColumns;
         }
-
         public List<ForeignKeyColumn> getForeignKeyColumns() {
             return foreignKeyColumns;
         }
-
         public List<column> getColumns() {
             return columns;
         }
     }
-
     public static class ForeignKeyColumn {
         private String pktableSchem;
         private String pktableName;
@@ -206,15 +252,12 @@ public class TableChangeStruct {
             return cascade;
         }
     }
-
     public static class IndexColumn {
         private String indexName;
         private String columnName;
-
         public String getIndexName() {
             return indexName;
         }
-
         public String getColumnName() {
             return columnName;
         }
@@ -224,25 +267,20 @@ public class TableChangeStruct {
         private String action;
         private String columnName;
         private String cascade;
-        private String  constraintName;
+        private String constraintName;
         private String type;
-
         public String getAction() {
             return action;
         }
-
         public String getColumnName() {
             return columnName;
         }
-
         public String getCascade() {
             return cascade;
         }
-
         public String getConstraintName() {
             return constraintName;
         }
-
         public String getType() {
             return type;
         }
@@ -251,40 +289,114 @@ public class TableChangeStruct {
     public static class CheckColumn {
         private String indexName;
         private String condition;
-
         public String getIndexName() {
             return indexName;
         }
-
         public String getCondition() {
             return condition;
         }
     }
 
+    public static class IndexChanges {
+        /**
+         * indexId
+         * example: schema_name.index_name
+         */
+        private String indexId;
+        private String indexName;
+        /**
+         * tableId
+         * example: SCHEMA_NAME.TABLE_NAME
+         */
+        private String tableId;
+        private String schemaName;
+        private String tableName;
+        public String getTableName() {
+            return tableName;
+        }
+        public void setTableName(String tableName) {
+            this.tableName = tableName;
+        }
+        private boolean unique;
+        public boolean isUnique() {
+            return unique;
+        }
+        public void setUnique(boolean unique) {
+            this.unique = unique;
+        }
+        private List<IndexColumnExpr> indexColumnExpr;
+        public String getIndexId() {
+            return indexId;
+        }
+        public void setIndexId(String indexId) {
+            this.indexId = indexId;
+        }
+        public String getIndexName() {
+            return indexName;
+        }
+        public void setIndexName(String indexName) {
+            this.indexName = indexName;
+        }
+        public String getTableId() {
+            return tableId;
+        }
+        public void setTableId(String tableId) {
+            this.tableId = tableId;
+        }
+        public String getSchemaName() {
+            return schemaName;
+        }
+        public void setSchemaName(String schemaName) {
+            this.schemaName = schemaName;
+        }
+        public List<IndexColumnExpr> getIndexColumnExpr() {
+            return indexColumnExpr;
+        }
+        public void setIndexColumnExpr(List<IndexColumnExpr> indexColumnExpr) {
+            this.indexColumnExpr = indexColumnExpr;
+        }
+        public static class IndexColumnExpr {
+            private String columnExpr;
+            private boolean desc;
+            private List<String> includeColumn;
+            public String getColumnExpr() {
+                return columnExpr;
+            }
+            public void setColumnExpr(String columnExpr) {
+                this.columnExpr = columnExpr;
+            }
+            public boolean isDesc() {
+                return desc;
+            }
+            public void setDesc(boolean desc) {
+                this.desc = desc;
+            }
+            public List<String> getIncludeColumn() {
+                return includeColumn;
+            }
+            public void setIncludeColumn(List<String> includeColumn) {
+                this.includeColumn = includeColumn;
+            }
+        }
+    }
     private String type;
     private String id;
     private Table table;
-
     public String getType() {
         return type;
     }
-
     public void setType(String type) {
         this.type = type;
     }
-
     public String getId() {
         return id;
     }
-
     public void setId(String id) {
         this.id = id;
     }
-
     public Table getTable() {
         return table;
     }
-
     public void setTable(Table table) {
         this.table = table;
     }

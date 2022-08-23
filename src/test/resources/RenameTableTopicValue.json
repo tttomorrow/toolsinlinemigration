@@ -1,0 +1,323 @@
+{
+  "schema": {
+    "type": "struct",
+    "fields": [
+      {
+        "type": "struct",
+        "fields": [
+          {
+            "type": "string",
+            "optional": false,
+            "field": "version"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "connector"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "name"
+          },
+          {
+            "type": "int64",
+            "optional": false,
+            "field": "ts_ms"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "name": "io.debezium.data.Enum",
+            "version": 1,
+            "parameters": {
+              "allowed": "true,last,false,incremental"
+            },
+            "default": "false",
+            "field": "snapshot"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "db"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "sequence"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "schema"
+          },
+          {
+            "type": "string",
+            "optional": false,
+            "field": "table"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "txId"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "commit_scn"
+          },
+          {
+            "type": "string",
+            "optional": true,
+            "field": "lcr_position"
+          }
+        ],
+        "optional": false,
+        "name": "io.debezium.connector.oracle.Source",
+        "field": "source"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "databaseName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "schemaName"
+      },
+      {
+        "type": "string",
+        "optional": true,
+        "field": "ddl"
+      },
+      {
+        "type": "array",
+        "items": {
+          "type": "struct",
+          "fields": [
+            {
+              "type": "string",
+              "optional": false,
+              "field": "type"
+            },
+            {
+              "type": "string",
+              "optional": false,
+              "field": "id"
+            },
+            {
+              "type": "struct",
+              "fields": [
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "defaultCharsetName"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "optional": false
+                  },
+                  "optional": true,
+                  "field": "primaryKeyColumnNames"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "struct",
+                    "fields": [
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "name"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "jdbcType"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "nativeType"
+                      },
+                      {
+                        "type": "string",
+                        "optional": false,
+                        "field": "typeName"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "typeExpression"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "charsetName"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "length"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": true,
+                        "field": "scale"
+                      },
+                      {
+                        "type": "int32",
+                        "optional": false,
+                        "field": "position"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "optional"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "autoIncremented"
+                      },
+                      {
+                        "type": "boolean",
+                        "optional": true,
+                        "field": "generated"
+                      },
+                      {
+                        "type": "string",
+                        "optional": true,
+                        "field": "comment"
+                      }
+                    ],
+                    "optional": false,
+                    "name": "io.debezium.connector.schema.Column"
+                  },
+                  "optional": false,
+                  "field": "columns"
+                },
+                {
+                  "type": "string",
+                  "optional": true,
+                  "field": "comment"
+                }
+              ],
+              "optional": false,
+              "name": "io.debezium.connector.schema.Table",
+              "field": "table"
+            }
+          ],
+          "optional": false,
+          "name": "io.debezium.connector.schema.Change"
+        },
+        "optional": false,
+        "field": "tableChanges"
+      }
+    ],
+    "optional": false,
+    "name": "io.debezium.connector.oracle.SchemaChangeValue"
+  },
+  "payload": {
+    "source": {
+      "version": "1.8.1.Final",
+      "connector": "oracle",
+      "name": "my_oracle_connector_001",
+      "ts_ms": 1656519928000,
+      "snapshot": "false",
+      "db": "ORCLCDB",
+      "sequence": null,
+      "schema": "C##ROMA_LOGMINER",
+      "table": "T_DDL_0031_01,T_DDL_0031",
+      "txId": "03001d00d8180100",
+      "scn": "99038178",
+      "commit_scn": "99037940",
+      "lcr_position": null
+    },
+    "databaseName": "ORCLCDB",
+    "schemaName": "C##ROMA_LOGMINER",
+    "ddl": "alter table t_ddl_0031 rename to t_ddl_0031_01;",
+    "tableChanges": [
+      {
+        "type": "ALTER",
+        "id": "\"ORCLCDB\".\"C##ROMA_LOGMINER\".\"T_DDL_0031_01\"",
+        "table": {
+          "defaultCharsetName": null,
+          "primaryKeyColumnNames": [
+          ],
+          "columns": [
+            {
+              "name": "ID",
+              "jdbcType": 2,
+              "nativeType": null,
+              "typeName": "NUMBER",
+              "typeExpression": "NUMBER",
+              "charsetName": null,
+              "length": 38,
+              "scale": 0,
+              "position": 1,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null
+            },
+            {
+              "name": "NAME",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 50,
+              "scale": null,
+              "position": 2,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null
+            },
+            {
+              "name": "ADDRESS",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 50,
+              "scale": null,
+              "position": 3,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null
+            },
+            {
+              "name": "DEPT_ADD",
+              "jdbcType": 12,
+              "nativeType": null,
+              "typeName": "VARCHAR2",
+              "typeExpression": "VARCHAR2",
+              "charsetName": null,
+              "length": 50,
+              "scale": null,
+              "position": 4,
+              "optional": true,
+              "autoIncremented": false,
+              "generated": false,
+              "comment": null
+            }
+          ],
+          "comment": null
+        }
+      }
+    ]
+  }
+}

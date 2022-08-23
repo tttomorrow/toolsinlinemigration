@@ -3,6 +3,10 @@ package org.gauss.util.ddl.convert;
 import org.apache.commons.lang3.StringUtils;
 import org.gauss.jsonstruct.DDLValueStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
+import org.gauss.util.OpenGaussConstant;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author saxisuer
@@ -19,8 +23,8 @@ public class DropTableConvert extends BaseConvert implements DDLConvert {
      * @return
      */
     @Override
-    public String convertToOpenGaussDDL(DDLValueStruct ddlValueStruct) {
-        if (StringUtils.containsIgnoreCase(ddlValueStruct.getPayload().getTableChanges().get(0).getType(), "DROP")) {
+    public List<String> convertToOpenGaussDDL(DDLValueStruct ddlValueStruct) {
+        if (StringUtils.containsIgnoreCase(ddlValueStruct.getPayload().getTableChanges().get(0).getType(), OpenGaussConstant.TABLE_PRIMARY_KEY_DROP)) {
             String schema = unwrapQuote(ddlValueStruct.getPayload().getSource().getSchema());
             String tableName = unwrapQuote(ddlValueStruct.getPayload().getSource().getTable());
             String ddl = String.format("drop table %s.%s ", wrapQuote(schema), wrapQuote(tableName));
@@ -31,8 +35,13 @@ public class DropTableConvert extends BaseConvert implements DDLConvert {
             } else if (ddlValueStruct.getPayload().getDdl().toLowerCase().contains(" purge")) {
                 ddl += "  purge";
             }
-            return ddl;
+            return Collections.singletonList(ddl);
         }
         return null;
+    }
+
+    @Override
+    public boolean needCacheSql() {
+        return true;
     }
 }

@@ -294,9 +294,7 @@ public class DMLProcessor {
             columnValues.add(insertValues.get(columnName));
         }
 
-        PreparedStatement statement = getStatement(insertSQL, columnInfos, columnValues);
-
-        return statement;
+        return getStatement(insertSQL, columnInfos, columnValues);
     }
 
     private PreparedStatement getUpdateStatement(KeyStruct key, DMLValueStruct value) {
@@ -321,9 +319,8 @@ public class DMLProcessor {
         LOGGER.info("UPDATE SQL:{}",completeUpdateSQL);
         columnInSQL.addAll(whereColInfos);
         valueInSQL.addAll(whereColValues);
-        PreparedStatement statement = getStatement(completeUpdateSQL, columnInSQL, valueInSQL);
 
-        return statement;
+        return getStatement(completeUpdateSQL, columnInSQL, valueInSQL);
     }
 
     private PreparedStatement getDeleteStatement(KeyStruct key, DMLValueStruct value) {
@@ -337,9 +334,8 @@ public class DMLProcessor {
 
         String completeDeleteSQL = deleteSQL + whereClause;
         LOGGER.info("DELETE SQL: {}",completeDeleteSQL);
-        PreparedStatement statement = getStatement(completeDeleteSQL, whereColInfos, whereColValues);
 
-        return statement;
+        return getStatement(completeDeleteSQL, whereColInfos, whereColValues);
     }
 
     private PreparedStatement getStatement(String preparedSQL, List<ColumnInfo> columnInfos, List<Object> columnValues) {
@@ -348,7 +344,7 @@ public class DMLProcessor {
             statement = executor.getConnection().prepareStatement(preparedSQL);
             setStatement(statement, columnInfos, columnValues);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error(e.getMessage(), e);
         }
         return statement;
     }

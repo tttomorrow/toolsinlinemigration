@@ -3,6 +3,9 @@ package org.gauss.util.ddl.convert;
 import org.apache.commons.lang3.StringUtils;
 import org.gauss.jsonstruct.DDLValueStruct;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author saxisuer
  * @Description renameTable ddl convert
@@ -18,7 +21,7 @@ public class RenameTableConvert extends BaseConvert implements DDLConvert {
      * @return
      */
     @Override
-    public String convertToOpenGaussDDL(DDLValueStruct ddlValueStruct) {
+    public List<String> convertToOpenGaussDDL(DDLValueStruct ddlValueStruct) {
         String ddl = ddlValueStruct.getPayload().getDdl();
         if (StringUtils.containsIgnoreCase(ddl, "RENAME TO")) {
             String tableId = ddlValueStruct.getPayload().getTableChanges().get(0).getId();
@@ -29,16 +32,21 @@ public class RenameTableConvert extends BaseConvert implements DDLConvert {
                 String[] tableNames = ddlValueStruct.getPayload().getSource().getTable().split(",");
                 String oldTableName = "";
                 for (String tableName : tableNames) {
-                    if(!tableName.equals(newTableName)) {
+                    if (!tableName.equals(newTableName)) {
                         oldTableName = tableName;
                     }
                 }
-                return String.format("ALTER TABLE %s.%s RENAME TO %s",
-                                     wrapQuote(schemaName),
-                                     wrapQuote(oldTableName),
-                                     wrapQuote(newTableName));
+                return Collections.singletonList(String.format("ALTER TABLE %s.%s RENAME TO %s",
+                                                               wrapQuote(schemaName),
+                                                               wrapQuote(oldTableName),
+                                                               wrapQuote(newTableName)));
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean needCacheSql() {
+        return true;
     }
 }

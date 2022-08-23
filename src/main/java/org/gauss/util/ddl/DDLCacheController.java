@@ -41,9 +41,22 @@ public class DDLCacheController {
      * @param scn
      * @param ddl
      */
-    public void addDdl(Long scn, String ddl) {
+    public void addDdls(Long scn, String ddl) {
         LOCK.write(() -> {
             DDL_CONTENT.put(ddl, scn);
+        });
+    }
+
+    /**
+     * add ddl to ddl cache
+     * @param scn  scn of ddl
+     * @param ddls ddl list
+     */
+    public void addDdls(Long scn, List<String> ddls) {
+        LOCK.write(() -> {
+            for (String each : ddls) {
+                DDL_CONTENT.put(each, scn);
+            }
         });
     }
 

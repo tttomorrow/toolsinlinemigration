@@ -1,5 +1,6 @@
 package org.gauss.util;
 
+import org.apache.commons.lang3.StringUtils;
 import org.gauss.MigrationConfig;
 
 /**
@@ -16,7 +17,7 @@ public class ObjectNameConvertUtil {
      * Object_A convert to Object_A
      *
      * @param rawObjectName
-     * @return
+     * @return string opengauss object name
      */
     public static String getObjectNameForOpenGauss(String rawObjectName) {
         if (MigrationConfig.isSmartConversionOfObjectNames()) {
@@ -25,5 +26,18 @@ public class ObjectNameConvertUtil {
             }
         }
         return rawObjectName;
+    }
+
+    /**
+     * get index_name with prefix
+     *
+     * @param indexName
+     * @return string opengauss index name
+     */
+    public static String getIndexNameForOpenGauss(String indexName) {
+        if (StringUtils.isNotBlank(MigrationConfig.getIndexPrefix())) {
+            indexName = MigrationConfig.getIndexPrefix() + indexName;
+        }
+        return indexName;
     }
 }

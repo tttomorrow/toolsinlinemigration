@@ -1,12 +1,10 @@
 package org.gauss.util.ddl.convert;
 
 import org.apache.commons.lang3.StringUtils;
-import org.gauss.MigrationConfig;
+import org.gauss.jsonstruct.SourceStruct;
 import org.gauss.util.ObjectNameConvertUtil;
 import org.gauss.util.OpenGaussConstant;
 import org.gauss.util.QuoteCharacter;
-
-import java.util.Collection;
 
 /**
  * @author saxisuer
@@ -35,13 +33,23 @@ public abstract class BaseConvert implements DDLConvert {
         return sb.toString();
     }
 
-    public String unwrapQuote(String s) {
-        if (s.contains(quoteCharacter.getStartDelimiter())) {
-            return s.replaceAll(quoteCharacter.getStartDelimiter(), "");
+    protected String getTableAlterTitleSql(SourceStruct source) {
+        return OpenGaussConstant.TABLE_ALTER + StringUtils.SPACE + OpenGaussConstant.TABLE + StringUtils.SPACE + wrapQuote(source.getSchema()) +
+                OpenGaussConstant.DOT + wrapQuote(source.getTable()) + StringUtils.SPACE;
+    }
+
+    /**
+     * remove quote from text
+     * @param text
+     * @return text remove begin quote and end quote
+     */
+    public String unwrapQuote(String text) {
+        if (text.contains(quoteCharacter.getStartDelimiter())) {
+            return text.replaceAll(quoteCharacter.getStartDelimiter(), "");
         }
-        if (s.contains(quoteCharacter.getEndDelimiter())) {
-            return s.replaceAll(quoteCharacter.getEndDelimiter(), "");
+        if (text.contains(quoteCharacter.getEndDelimiter())) {
+            return text.replaceAll(quoteCharacter.getEndDelimiter(), "");
         }
-        return s;
+        return text;
     }
 }
