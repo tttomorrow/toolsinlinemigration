@@ -53,8 +53,7 @@ public final class DDLConvertHandler {
     public static List<DDLConvert> getDDlConvert(DDLValueStruct.PayloadStruct payload) {
         List<DDLConvert> ddlConverts = new ArrayList<>();
         // create index or drop index
-        if (StringUtils.containsIgnoreCase(payload.getTableChanges().get(0).getType(), OpenGaussConstant.CREATE_INDEX) ||
-                StringUtils.containsIgnoreCase(payload.getTableChanges().get(0).getType(), OpenGaussConstant.DROP_INDEX)) {
+        if (StringUtils.equalsAny(payload.getTableChanges().get(0).getType(), OpenGaussConstant.CREATE_INDEX,OpenGaussConstant.DROP_INDEX)) {
             ddlConverts.add(new IndexConvert());
         }
         //rename table
@@ -63,7 +62,7 @@ public final class DDLConvertHandler {
 
         }
         //drop table
-        if (StringUtils.containsIgnoreCase(payload.getTableChanges().get(0).getType(), OpenGaussConstant.TABLE_PRIMARY_KEY_DROP)) {
+        if (StringUtils.equals(payload.getTableChanges().get(0).getType(), OpenGaussConstant.TABLE_PRIMARY_KEY_DROP)) {
             ddlConverts.add(new DropTableConvert());
 
         }
