@@ -75,14 +75,8 @@ public class IndexConvert extends BaseConvert implements DDLConvert {
                     .append(StringUtils.SPACE);
         String collect = indexChanges.getIndexColumnExpr()
                                      .stream()
-                                     .map(e -> {
-                                         String columnExpr = e.getColumnExpr();
-                                         for (int i = 0; i < e.getIncludeColumn().size(); i++) {
-                                             columnExpr = columnExpr.replace(":$" + i, wrapQuote(e.getIncludeColumn().get(i)));
-                                         }
-                                         return OpenGaussConstant.BRACKETS_START + columnExpr + OpenGaussConstant.BRACKETS_ENDT + StringUtils.SPACE +
-                                                 (e.isDesc() ? OpenGaussConstant.DESC : OpenGaussConstant.ASC);
-                                     })
+                                     .map(e -> OpenGaussConstant.BRACKETS_START + replaceExpression(e.getColumnExpr(), e.getIncludeColumn()) + OpenGaussConstant.BRACKETS_ENDT + StringUtils.SPACE +
+                                             (e.isDesc() ? OpenGaussConstant.DESC : OpenGaussConstant.ASC))
                                      .collect(Collectors.joining(OpenGaussConstant.COMMA + StringUtils.SPACE,
                                                                  OpenGaussConstant.BRACKETS_START,
                                                                  OpenGaussConstant.BRACKETS_ENDT));

@@ -6,6 +6,8 @@ import org.gauss.util.ObjectNameConvertUtil;
 import org.gauss.util.OpenGaussConstant;
 import org.gauss.util.QuoteCharacter;
 
+import java.util.List;
+
 /**
  * @author saxisuer
  * @Description
@@ -51,5 +53,13 @@ public abstract class BaseConvert implements DDLConvert {
             return text.replaceAll(quoteCharacter.getEndDelimiter(), "");
         }
         return text;
+    }
+
+    public String replaceExpression(String expr, List<String> includeColumn) {
+        String expression = expr;
+        for (int i = 0; i < includeColumn.size(); i++) {
+            expression = expression.replace(":$" + i, wrapQuote(includeColumn.get(i)));
+        }
+        return expression;
     }
 }

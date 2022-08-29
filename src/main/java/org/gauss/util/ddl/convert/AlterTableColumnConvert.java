@@ -241,9 +241,14 @@ public class AlterTableColumnConvert extends BaseConvert implements DDLConvert {
         List<String> sql = new ArrayList<>();
         for (String eachDropColumn : tableChangeStruct.getTable().getChangeColumns().getDropColumn()) {
             if (StringUtils.isNotBlank(eachDropColumn)) {
+                String columnName = eachDropColumn;
+                String[] split = eachDropColumn.split(";");
+                if(split.length > 1) {
+                    columnName = split[0];
+                }
                 logger.info("get drop column, columnName: {}", eachDropColumn);
                 String dropColumnSql = OpenGaussConstant.TABLE_PRIMARY_KEY_DROP + StringUtils.SPACE + OpenGaussConstant.COLUMN + StringUtils.SPACE +
-                        wrapQuote(eachDropColumn);
+                        wrapQuote(columnName) + (split.length > 1 ? StringUtils.SPACE + split[1] : StringUtils.SPACE);
                 sql.add(dropColumnSql);
             }
         }

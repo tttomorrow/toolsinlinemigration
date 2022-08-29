@@ -93,8 +93,9 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
     }
 
     private String getCheckSql(TableChangeStruct.CheckColumn checkColumn) {
-        return StringUtils.LF + OpenGaussConstant.TAB + OpenGaussConstant.CONSTRAINT + StringUtils.SPACE + checkColumn.getIndexName() +
-                StringUtils.SPACE + OpenGaussConstant.CHECK + StringUtils.SPACE + StringUtils.SPACE + addBrackets(checkColumn.getCondition());
+        return StringUtils.LF + OpenGaussConstant.TAB + OpenGaussConstant.CONSTRAINT + StringUtils.SPACE + wrapQuote(checkColumn.getIndexName()) +
+                StringUtils.SPACE + OpenGaussConstant.CHECK + StringUtils.SPACE + StringUtils.SPACE +
+                addBrackets(replaceExpression(checkColumn.getCondition(), Arrays.asList(checkColumn.getIncludeColumn().split(","))));
     }
 
     private String getForeignKeySql(TableChangeStruct.ForeignKeyColumn foreignKeyColumn) {
@@ -117,7 +118,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         sb.append(StringUtils.LF);
         sb.append(OpenGaussConstant.TAB);
         sb.append(OpenGaussConstant.CONSTRAINT).append(StringUtils.SPACE);
-        sb.append(foreignKeyColumn.getFkName()).append(StringUtils.SPACE);
+        sb.append(wrapQuote(foreignKeyColumn.getFkName())).append(StringUtils.SPACE);
         sb.append(OpenGaussConstant.FOREIGN_KEY).append(StringUtils.SPACE);
         sb.append(StringUtils.SPACE).append(addBrackets(fkColumnNameStr)).append(StringUtils.SPACE);
         sb.append(StringUtils.LF);
@@ -145,8 +146,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
                                                                                                                .filter(primaryKeyColumnChangeColumn -> StringUtils.isNotEmpty(
                                                                                                                        primaryKeyColumnChangeColumn.getConstraintName()))
                                                                                                                .findAny();
-            if (primaryKeyColumnChange.isPresent() &&
-                    StringUtils.equals(primaryKeyColumnChange.get().getAction().toUpperCase(), OpenGaussConstant.TABLE_PRIMARY_KEY_ADD)) {
+            if (primaryKeyColumnChange.isPresent()) {
                 return getPrimaryKeyAddByConstraintName(primaryKeyAddColumnNames, primaryKeyColumnChange.get().getConstraintName());
             }
         }

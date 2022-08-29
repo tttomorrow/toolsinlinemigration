@@ -289,11 +289,29 @@ public class TableChangeStruct {
     public static class CheckColumn {
         private String indexName;
         private String condition;
+        private String includeColumn;
+
+        public String getIncludeColumn() {
+            return includeColumn;
+        }
+
+        public void setIncludeColumn(String includeColumn) {
+            this.includeColumn = includeColumn;
+        }
+
         public String getIndexName() {
             return indexName;
         }
         public String getCondition() {
             return condition;
+        }
+
+        public void setIndexName(String indexName) {
+            this.indexName = indexName;
+        }
+
+        public void setCondition(String condition) {
+            this.condition = condition;
         }
     }
 
