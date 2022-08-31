@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
  */
 public class AlterTableConstraintConvert extends BaseConvert implements DDLConvert {
     /**
-     *
      * @param struct debezium captured DDL record
      * @return list of ddl
      */
@@ -46,9 +45,10 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
         List<String> ddl = new ArrayList<>();
         TableChangeStruct.Table table = tableChangeStruct.getTable();
         if (CollectionUtils.isNotEmpty(table.getPrimaryKeyColumnChanges())) {
-            ddl.add(StringUtils.join(primaryKeyColumnChangeSql(table.getPrimaryKeyColumnChanges(), source.getTable(), getTableAlterTitleSql(source)
-                                             ,table.getColumns()),
-                                     OpenGaussConstant.SEMICOLON));
+            ddl.add(StringUtils.join(primaryKeyColumnChangeSql(table.getPrimaryKeyColumnChanges(),
+                                                               source.getTable(),
+                                                               getTableAlterTitleSql(source),
+                                                               table.getColumns()), OpenGaussConstant.SEMICOLON));
         }
         if (CollectionUtils.isNotEmpty(table.getUniqueColumns())) {
             ddl.add(StringUtils.join(uniqueColumnChangeSql(table.getUniqueColumns(), getTableAlterTitleSql(source)), OpenGaussConstant.SEMICOLON));
@@ -79,9 +79,8 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
 
     private String getCheckAlterSqL(TableChangeStruct.CheckColumn checkColumn, String alterTitleSql) {
         return alterTitleSql + StringUtils.SPACE + OpenGaussConstant.TABLE_PRIMARY_KEY_ADD + StringUtils.SPACE + "CONSTRAINT " +
-                wrapQuote(checkColumn.getIndexName()) + StringUtils.SPACE + "CHECK " + addBrackets(replaceExpression(checkColumn.getCondition(),
-                                                                                                                     Arrays.asList(checkColumn.getIncludeColumn()
-                                                                                                                                              .split(","))));
+                wrapQuote(checkColumn.getIndexName()) + StringUtils.SPACE + "CHECK " +
+                addBrackets(replaceExpression(checkColumn.getCondition(), Arrays.asList(checkColumn.getIncludeColumn().split(","))));
     }
 
     private List<TableChangeStruct.column> getColumnChanges(List<TableChangeStruct.column> columns) {
@@ -99,40 +98,52 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
         return Collections.emptyList();
     }
 
-    private String getPrimaryKeyDropSqL(String tableName, TableChangeStruct.PrimaryKeyColumnChange primaryKeyColumnChangeColumn,
+    private String getPrimaryKeyDropSqL(String tableName, TableChangeStruct.PrimaryKeyColumnChange primaryKeyColumnChange,
                                         String alterTitleSql) {
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append(OpenGaussConstant.TABLE_PRIMARY_KEY_DROP).append(StringUtils.SPACE);
         sb.append("CONSTRAINT ");
-        if (StringUtils.isNotEmpty(primaryKeyColumnChangeColumn.getConstraintName())) {
-            sb.append(wrapQuote(primaryKeyColumnChangeColumn.getConstraintName()));
+        if (StringUtils.isNotEmpty(primaryKeyColumnChange.getConstraintName())) {
+            sb.append(wrapQuote(primaryKeyColumnChange.getConstraintName()));
         } else {
             sb.append(wrapQuote(tableName + "_pkey"));
         }
-        if (StringUtils.isNotEmpty(primaryKeyColumnChangeColumn.getCascade())) {
-            sb.append(StringUtils.SPACE).append(primaryKeyColumnChangeColumn.getCascade());
+        if (StringUtils.isNotEmpty(primaryKeyColumnChange.getCascade())) {
+            sb.append(StringUtils.SPACE).append(primaryKeyColumnChange.getCascade());
         }
         return sb.toString();
     }
 
-    private String getPrimaryKeyAddSqL(List<String> columnNameList, String alterTitleSql, String constraintName) {
+    private String getPrimaryKeyAddSqL(String tableName, List<String> columnNameList, String alterTitleSql, String constraintName,
+                                       String usingIndex) {
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append(OpenGaussConstant.TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
+        if (StringUtils.isNotBlank(usingIndex)) {
+            if (StringUtils.isBlank(constraintName)) {
+                constraintName = tableName + "_pkey";
+            }
+        }
         if (StringUtils.isNotEmpty(constraintName)) {
             sb.append("CONSTRAINT ").append(wrapQuote(constraintName)).append(StringUtils.SPACE);
         }
         sb.append("PRIMARY KEY ");
-        sb.append(addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA)));
+        if (StringUtils.isNotBlank(usingIndex)) {
+            sb.append("USING INDEX ").append(wrapQuote(usingIndex));
+        } else {
+            sb.append(addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA)));
+        }
         return sb.toString();
     }
 
     private List<String> primaryKeyColumnChangeSql(List<TableChangeStruct.PrimaryKeyColumnChange> primaryKeyColumnChangeColumns, String tableName,
-                                                   String alterTitleSql,List<TableChangeStruct.column> columns) {
+                                                   String alterTitleSql, List<TableChangeStruct.column> columns) {
 
         Map<String, TableChangeStruct.column> columnMapKeyByColumnName = columns.stream()
-                                                               .collect(Collectors.toMap(TableChangeStruct.column::getName, s -> s, (s1, s2) -> s1));
+                                                                                .collect(Collectors.toMap(TableChangeStruct.column::getName,
+                                                                                                          s -> s,
+                                                                                                          (s1, s2) -> s1));
 
         Map<String, List<TableChangeStruct.PrimaryKeyColumnChange>> primaryKeyGroup = primaryKeyColumnChangeColumns.stream()
                                                                                                                    .collect(Collectors.groupingBy(
@@ -150,14 +161,19 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
                                                                                                                .filter(primaryKeyColumnChangeColumn -> StringUtils.isNotEmpty(
                                                                                                                        primaryKeyColumnChangeColumn.getConstraintName()))
                                                                                                                .findAny();
+            String usingIndex = primaryKeyColumnChanges.stream()
+                                                       .map(TableChangeStruct.PrimaryKeyColumnChange::getUsingIndex)
+                                                       .filter(StringUtils::isNotBlank)
+                                                       .findAny()
+                                                       .orElse(StringUtils.EMPTY);
 
             if (StringUtils.equals(action.toUpperCase(), OpenGaussConstant.TABLE_PRIMARY_KEY_ADD)) {
                 if (primaryKeyColumnChange.isPresent()) {
-                    primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames,
+                    primaryKeySqlList.add(getPrimaryKeyAddSqL(tableName,primaryKeyAddColumnNames,
                                                               alterTitleSql,
-                                                              primaryKeyColumnChange.get().getConstraintName()));
+                                                              primaryKeyColumnChange.get().getConstraintName(),usingIndex));
                 } else {
-                    primaryKeySqlList.add(getPrimaryKeyAddSqL(primaryKeyAddColumnNames, alterTitleSql, null));
+                    primaryKeySqlList.add(getPrimaryKeyAddSqL(tableName,primaryKeyAddColumnNames, alterTitleSql, null,usingIndex));
                 }
 
             } else {
@@ -191,26 +207,38 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
         return alterTitleSql + StringUtils.SPACE + "ALTER COLUMN " + columnName + StringUtils.SPACE + "DROP NOT NULL";
     }
 
-    private List<String> uniqueColumnChangeSql(List<TableChangeStruct.IndexColumn> uniqueColumns, String alterTitleSql) {
+    private List<String> uniqueColumnChangeSql(List<TableChangeStruct.UniqueColumn> uniqueColumns, String alterTitleSql) {
         List<String> uniqueColumnChangeSqlList = new ArrayList<>();
-        //if modify more than one unique constraint in one ddl
-        Map<String, List<TableChangeStruct.IndexColumn>> collect =
-                uniqueColumns.stream().filter(uniqueColumn -> StringUtils.isNotBlank(uniqueColumn.getIndexName()))
-                                                                                .collect(Collectors.groupingBy(TableChangeStruct.IndexColumn::getIndexName));
-        for (Map.Entry<String, List<TableChangeStruct.IndexColumn>> stringListEntry : collect.entrySet()) {
+        Map<String, List<TableChangeStruct.UniqueColumn>> collect = uniqueColumns.stream()
+                                                                                 .filter(uniqueColumn -> StringUtils.isNotBlank(uniqueColumn.getIndexName()))
+                                                                                 .collect(Collectors.groupingBy(TableChangeStruct.UniqueColumn::getIndexName));
+        for (Map.Entry<String, List<TableChangeStruct.UniqueColumn>> stringListEntry : collect.entrySet()) {
+            String usingIndex = stringListEntry.getValue()
+                                               .stream()
+                                               .map(TableChangeStruct.UniqueColumn::getUsingIndex)
+                                               .filter(StringUtils::isNotBlank)
+                                               .findAny()
+                                               .orElse(StringUtils.EMPTY);
+
             List<String> uniqueColumnNames = stringListEntry.getValue()
                                                             .stream()
                                                             .map(uniqueColumn -> wrapQuote(uniqueColumn.getColumnName()))
                                                             .collect(Collectors.toList());
-            String uniqueAlterSql = getUniqueAlterSqL(uniqueColumnNames,alterTitleSql,stringListEntry.getKey());
+            String uniqueAlterSql = getUniqueAlterSqL(uniqueColumnNames, alterTitleSql, stringListEntry.getKey(), usingIndex);
             uniqueColumnChangeSqlList.add(uniqueAlterSql);
         }
         return uniqueColumnChangeSqlList;
     }
 
-    private String getUniqueAlterSqL(List<String> columnNameList, String alterTitleSql, String constraintName) {
-        return alterTitleSql + StringUtils.SPACE + OpenGaussConstant.TABLE_PRIMARY_KEY_ADD + StringUtils.SPACE + "CONSTRAINT " +
-                wrapQuote(constraintName) + StringUtils.SPACE + "UNIQUE " + addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA));
+    private String getUniqueAlterSqL(List<String> columnNameList, String alterTitleSql, String constraintName, String usingIndex) {
+        if (StringUtils.isNotBlank(usingIndex)) {
+            return alterTitleSql + StringUtils.SPACE + OpenGaussConstant.TABLE_PRIMARY_KEY_ADD + StringUtils.SPACE + "CONSTRAINT " +
+                    wrapQuote(constraintName) + StringUtils.SPACE + "UNIQUE USING INDEX " + wrapQuote(usingIndex);
+        } else {
+            return alterTitleSql + StringUtils.SPACE + OpenGaussConstant.TABLE_PRIMARY_KEY_ADD + StringUtils.SPACE + "CONSTRAINT " +
+                    wrapQuote(constraintName) + StringUtils.SPACE + "UNIQUE " +
+                    addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA));
+        }
     }
 
     @Override

@@ -177,7 +177,7 @@ public class TableChangeStruct {
         private List<String> primaryKeyColumnNames;
         private List<String> primaryConstraintName = new ArrayList<>();
         private List<PrimaryKeyColumnChange> primaryKeyColumnChanges = new ArrayList<>();
-        private List<IndexColumn> uniqueColumns = new ArrayList<>();
+        private List<UniqueColumn> uniqueColumns = new ArrayList<>();
         private List<CheckColumn> checkColumns = new ArrayList<>();
         private List<ForeignKeyColumn> foreignKeyColumns = new ArrayList<>();
         private List<column> columns;
@@ -207,7 +207,7 @@ public class TableChangeStruct {
         public void setPrimaryKeyColumnNames(List<String> primaryKeyColumnNames) {
             this.primaryKeyColumnNames = primaryKeyColumnNames;
         }
-        public List<IndexColumn> getUniqueColumns() {
+        public List<UniqueColumn> getUniqueColumns() {
             return uniqueColumns;
         }
         public List<CheckColumn> getCheckColumns() {
@@ -252,9 +252,15 @@ public class TableChangeStruct {
             return cascade;
         }
     }
-    public static class IndexColumn {
+    public static class UniqueColumn {
         private String indexName;
         private String columnName;
+        private String usingIndex;
+
+        public String getUsingIndex() {
+            return usingIndex;
+        }
+
         public String getIndexName() {
             return indexName;
         }
@@ -268,6 +274,17 @@ public class TableChangeStruct {
         private String columnName;
         private String cascade;
         private String constraintName;
+
+        private String usingIndex;
+
+        public String getUsingIndex() {
+            return usingIndex;
+        }
+
+        public void setUsingIndex(String usingIndex) {
+            this.usingIndex = usingIndex;
+        }
+
         private String type;
         public String getAction() {
             return action;

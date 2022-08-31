@@ -51,7 +51,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
                                                        .map(this::getForeignKeySql)
                                                        .collect(Collectors.toList());
 
-        List<TableChangeStruct.IndexColumn> uniqueColumns = tableChangeStruct.getTable().getUniqueColumns();
+        List<TableChangeStruct.UniqueColumn> uniqueColumns = tableChangeStruct.getTable().getUniqueColumns();
         List<String> uniqueColumnSqls = getUniqueColumnSqls(uniqueColumns);
 
         List<String> checkColumnSqls = tableChangeStruct.getTable().getCheckColumns().stream().map(this::getCheckSql).collect(Collectors.toList());
@@ -66,14 +66,14 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
                 StringUtils.join(foreignKeySqls, getColumnJoinStr()) + OpenGaussConstant.BRACKETS_ENDT;
     }
 
-    private List<String> getUniqueColumnSqls(List<TableChangeStruct.IndexColumn> uniqueColumns) {
+    private List<String> getUniqueColumnSqls(List<TableChangeStruct.UniqueColumn> uniqueColumns) {
         List<String> sql = new ArrayList<>();
-        Map<String, List<TableChangeStruct.IndexColumn>> uniqueConstraintGroupByConstraintName = uniqueColumns.stream()
-                                                                                                              .filter(uniqueColumn -> StringUtils.isNotBlank(
+        Map<String, List<TableChangeStruct.UniqueColumn>> uniqueConstraintGroupByConstraintName = uniqueColumns.stream()
+                                                                                                               .filter(uniqueColumn -> StringUtils.isNotBlank(
                                                                                                                       uniqueColumn.getIndexName()))
-                                                                                                              .collect(Collectors.groupingBy(
-                                                                                                                      TableChangeStruct.IndexColumn::getIndexName));
-        for (Map.Entry<String, List<TableChangeStruct.IndexColumn>> eachUniqueConstraint : uniqueConstraintGroupByConstraintName.entrySet()) {
+                                                                                                               .collect(Collectors.groupingBy(
+                                                                                                                       TableChangeStruct.UniqueColumn::getIndexName));
+        for (Map.Entry<String, List<TableChangeStruct.UniqueColumn>> eachUniqueConstraint : uniqueConstraintGroupByConstraintName.entrySet()) {
             List<String> uniqueColumnNames = eachUniqueConstraint.getValue()
                                                                  .stream()
                                                                  .map(uniqueColumn -> wrapQuote(uniqueColumn.getColumnName()))

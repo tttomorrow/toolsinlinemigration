@@ -17,22 +17,18 @@ import java.util.List;
  */
 public abstract class BaseConvert implements DDLConvert {
 
-    private QuoteCharacter quoteCharacter = QuoteCharacter.DOUBLE_QUOTE;
+    private final QuoteCharacter quoteCharacter = QuoteCharacter.DOUBLE_QUOTE;
 
     public String wrapQuote(String s) {
         s = ObjectNameConvertUtil.getObjectNameForOpenGauss(s);
         return quoteCharacter.wrap(s);
     }
     public String addBrackets(Object str) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(OpenGaussConstant.BRACKETS_START).append(str).append(OpenGaussConstant.BRACKETS_ENDT);
-        return sb.toString();
+        return OpenGaussConstant.BRACKETS_START + str + OpenGaussConstant.BRACKETS_ENDT;
     }
 
     public String getColumnJoinStr() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(OpenGaussConstant.COMMA).append(StringUtils.CR).append(StringUtils.LF);
-        return sb.toString();
+        return OpenGaussConstant.COMMA + StringUtils.CR + StringUtils.LF;
     }
 
     protected String getTableAlterTitleSql(SourceStruct source) {
