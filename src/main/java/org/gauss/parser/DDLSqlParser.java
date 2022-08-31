@@ -206,11 +206,11 @@ public class DDLSqlParser{
         return checkColumns.stream().map(checkColumn -> getCheckAlterSqL(checkColumn, alterTitleSql)).collect(Collectors.toList());
     }
 
-    private List<String> uniqueColumnChangeSql(List<TableChangeStruct.IndexColumn> uniqueColumns, String alterTitleSql){
+    private List<String> uniqueColumnChangeSql(List<TableChangeStruct.UniqueColumn> uniqueColumns, String alterTitleSql){
         List<String> uniqueColumnNames = uniqueColumns.stream()
             .map(uniqueColumn -> addQuo(uniqueColumn.getColumnName()))
             .collect(Collectors.toList());
-        Optional<TableChangeStruct.IndexColumn> uniqueColumnIndex =
+        Optional<TableChangeStruct.UniqueColumn> uniqueColumnIndex =
             uniqueColumns.stream().filter(uniqueColumn -> StringUtils.isNotEmpty(uniqueColumn.getIndexName()))
                 .findAny();
         if (uniqueColumnIndex.isPresent()) {
@@ -319,7 +319,7 @@ public class DDLSqlParser{
         return sb.toString();
     }
 
-    private String  getUniqueSql(TableChangeStruct.IndexColumn uniqueColumn) {
+    private String  getUniqueSql(TableChangeStruct.UniqueColumn uniqueColumn) {
         StringBuilder sb = new StringBuilder();
         sb.append(StringUtils.LF);
         sb.append(TAB);

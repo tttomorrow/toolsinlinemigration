@@ -1,7 +1,5 @@
 package org.gauss.util;
 
-import org.gauss.util.ddl.convert.DropTableConvertTest;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,7 +15,7 @@ import java.util.stream.Collectors;
 public class TestUtil {
 
     public static String readJsonFromFile(String fileName) {
-        InputStream resourceAsStream = DropTableConvertTest.class.getClassLoader().getResourceAsStream(fileName);
+        InputStream resourceAsStream = TestUtil.class.getClassLoader().getResourceAsStream(fileName);
         return new BufferedReader(new InputStreamReader(resourceAsStream)).lines().collect(Collectors.joining("\n"));
     }
 }
