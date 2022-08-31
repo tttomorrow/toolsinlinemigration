@@ -7,14 +7,11 @@ package org.gauss.util;
 import org.gauss.common.DMLSQL;
 import org.gauss.jsonstruct.DMLValueStruct;
 import org.gauss.jsonstruct.FieldStruct;
-import org.gauss.parser.Parser;
 import org.gauss.jsonstruct.KeyStruct;
+import org.gauss.parser.Parser;
 import org.gauss.parser.ParserContainer;
-
-
 import org.gauss.util.ddl.DDLCacheController;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.XML;
 import org.slf4j.Logger;
@@ -25,20 +22,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.Map.Entry;
-
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
@@ -47,6 +30,19 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 
 public class DMLProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(DMLProcessor.class);
@@ -296,10 +292,7 @@ public class DMLProcessor {
     }
 
     private PreparedStatement getInsertStatement(DMLValueStruct value) {
-        if (insertSQL == null) {
-            initInsertSQL();
-        }
-
+        initInsertSQL();
         List<Object> columnValues = new ArrayList<>();
         Map<String, Object> insertValues = value.getPayload().getAfter();
         for (ColumnInfo columnInfo : columnInfos) {

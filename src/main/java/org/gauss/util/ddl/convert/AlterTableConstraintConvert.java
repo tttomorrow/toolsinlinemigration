@@ -78,13 +78,10 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
     }
 
     private String getCheckAlterSqL(TableChangeStruct.CheckColumn checkColumn, String alterTitleSql) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(alterTitleSql).append(StringUtils.SPACE);
-        sb.append(OpenGaussConstant.TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
-        sb.append("CONSTRAINT ").append(wrapQuote(checkColumn.getIndexName())).append(StringUtils.SPACE);
-        sb.append("CHECK ");
-        sb.append(addBrackets(checkColumn.getCondition()));
-        return sb.toString();
+        return alterTitleSql + StringUtils.SPACE + OpenGaussConstant.TABLE_PRIMARY_KEY_ADD + StringUtils.SPACE + "CONSTRAINT " +
+                wrapQuote(checkColumn.getIndexName()) + StringUtils.SPACE + "CHECK " + addBrackets(replaceExpression(checkColumn.getCondition(),
+                                                                                                                     Arrays.asList(checkColumn.getIncludeColumn()
+                                                                                                                                              .split(","))));
     }
 
     private List<TableChangeStruct.column> getColumnChanges(List<TableChangeStruct.column> columns) {
@@ -191,12 +188,7 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
     }
 
     private String getColumnNullSql(String columnName, String alterTitleSql) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(alterTitleSql).append(StringUtils.SPACE);
-        sb.append("ALTER COLUMN ");
-        sb.append(columnName).append(StringUtils.SPACE);
-        sb.append("DROP NOT NULL");
-        return sb.toString();
+        return alterTitleSql + StringUtils.SPACE + "ALTER COLUMN " + columnName + StringUtils.SPACE + "DROP NOT NULL";
     }
 
     private List<String> uniqueColumnChangeSql(List<TableChangeStruct.IndexColumn> uniqueColumns, String alterTitleSql) {
@@ -217,13 +209,8 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
     }
 
     private String getUniqueAlterSqL(List<String> columnNameList, String alterTitleSql, String constraintName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(alterTitleSql).append(StringUtils.SPACE);
-        sb.append(OpenGaussConstant.TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
-        sb.append("CONSTRAINT ").append(wrapQuote(constraintName)).append(StringUtils.SPACE);
-        sb.append("UNIQUE ");
-        sb.append(addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA)));
-        return sb.toString();
+        return alterTitleSql + StringUtils.SPACE + OpenGaussConstant.TABLE_PRIMARY_KEY_ADD + StringUtils.SPACE + "CONSTRAINT " +
+                wrapQuote(constraintName) + StringUtils.SPACE + "UNIQUE " + addBrackets(StringUtils.join(columnNameList, OpenGaussConstant.COMMA));
     }
 
     @Override
@@ -238,24 +225,24 @@ public class AlterTableConstraintConvert extends BaseConvert implements DDLConve
     private String getForeignKeySql(TableChangeStruct.ForeignKeyColumn foreignKeyColumn, String alterTitleSql) {
 
         String fkColumnNameStr = wrapQuote(foreignKeyColumn.getFkColumnName());
-        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(OpenGaussConstant.COMMA))) {
-            fkColumnNameStr = StringUtils.join(Arrays.stream(foreignKeyColumn.getFkColumnName().split(String.valueOf(OpenGaussConstant.COMMA)))
+        if (foreignKeyColumn.getFkColumnName().contains(OpenGaussConstant.COMMA)) {
+            fkColumnNameStr = StringUtils.join(Arrays.stream(foreignKeyColumn.getFkColumnName().split(OpenGaussConstant.COMMA))
                                                      .map(this::wrapQuote)
-                                                     .collect(Collectors.toList()), String.valueOf(OpenGaussConstant.COMMA));
+                                                     .collect(Collectors.toList()), OpenGaussConstant.COMMA);
         }
 
         String pkColumnNameStr = wrapQuote(foreignKeyColumn.getPkColumnName());
-        if (foreignKeyColumn.getFkColumnName().contains(String.valueOf(OpenGaussConstant.COMMA))) {
-            pkColumnNameStr = StringUtils.join(Arrays.stream(foreignKeyColumn.getPkColumnName().split(String.valueOf(OpenGaussConstant.COMMA)))
+        if (foreignKeyColumn.getFkColumnName().contains(OpenGaussConstant.COMMA)) {
+            pkColumnNameStr = StringUtils.join(Arrays.stream(foreignKeyColumn.getPkColumnName().split(OpenGaussConstant.COMMA))
                                                      .map(this::wrapQuote)
-                                                     .collect(Collectors.toList()), String.valueOf(OpenGaussConstant.COMMA));
+                                                     .collect(Collectors.toList()), OpenGaussConstant.COMMA);
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append(alterTitleSql).append(StringUtils.SPACE);
         sb.append(OpenGaussConstant.TABLE_PRIMARY_KEY_ADD).append(StringUtils.SPACE);
         sb.append("CONSTRAINT ");
-        sb.append(foreignKeyColumn.getFkName()).append(StringUtils.SPACE);
+        sb.append(wrapQuote(foreignKeyColumn.getFkName())).append(StringUtils.SPACE);
         sb.append("FOREIGN KEY ");
         sb.append(StringUtils.SPACE).append(addBrackets(fkColumnNameStr)).append(StringUtils.SPACE);
         sb.append(StringUtils.LF);
