@@ -428,7 +428,7 @@
     },
     "databaseName": "ORCLCDB",
     "schemaName": "C##ROMA_LOGMINER",
-    "ddl": "create table c##roma_logminer.t_index_0018_02(\ncol1 int,\ncol2 varchar(50),\ncol3 varchar(64),\ncol4 int,\nconstraint pk_2 primary key(col1,col2),\nconstraint fk_2 foreign key(col4,col3) references c##roma_logminer.t_index_0018_02(col1,col2)\n);",
+    "ddl": "create table c##roma_logminer.t_index_0018_02(\ncol1 int,\ncol2 varchar(50),\ncol3 varchar(64),\ncol4 float,\nconstraint pk_2 primary key(col1,col2),\nconstraint fk_2 foreign key(col4,col3) references c##roma_logminer.t_index_0018_02(col1,col2)\n);",
     "tableChanges": [
       {
         "type": "CREATE",
@@ -523,12 +523,12 @@
             },
             {
               "name": "COL4",
-              "jdbcType": 2,
+              "jdbcType": 6,
               "nativeType": null,
-              "typeName": "NUMBER",
-              "typeExpression": "NUMBER",
+              "typeName": "FLOAT",
+              "typeExpression": "FLOAT",
               "charsetName": null,
-              "length": 38,
+              "length": 126,
               "scale": 0,
               "position": 4,
               "optional": true,

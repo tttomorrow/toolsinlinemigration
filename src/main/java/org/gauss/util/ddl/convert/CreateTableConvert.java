@@ -2,12 +2,14 @@ package org.gauss.util.ddl.convert;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
+import org.gauss.converter.ColumnConvert;
 import org.gauss.converter.ColumnTypeConverter;
 import org.gauss.jsonstruct.DDLValueStruct;
 import org.gauss.jsonstruct.SourceStruct;
 import org.gauss.jsonstruct.TableChangeStruct;
 import org.gauss.util.OpenGaussConstant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +28,7 @@ import java.util.stream.Collectors;
  * @COMPANY ENMOTECH
  */
 public class CreateTableConvert extends BaseConvert implements DDLConvert {
+    private static final Logger logger = LoggerFactory.getLogger(CreateTableConvert.class);
 
     public String parse(DDLValueStruct struct) {
         List<TableChangeStruct> tableChanges = struct.getPayload().getTableChanges();
@@ -182,9 +185,15 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         StringBuilder sb = new StringBuilder();
         sb.append(OpenGaussConstant.TAB);
         sb.append(wrapQuote(column.getName())).append(StringUtils.SPACE);
-        sb.append(ColumnTypeConverter.convertTypeName(column.getTypeName()))
-          .append(column.getLength() > NumberUtils.INTEGER_ZERO ? addBrackets(column.getLength()) : StringUtils.EMPTY)
-          .append(StringUtils.SPACE);
+        String targetTypeName = ColumnTypeConverter.convertTypeName(column.getTypeName());
+        if (null == targetTypeName) {
+            logger.error("source column :{} type {} not support in openGauss yet! convert to character varying now ",
+                         column.getName(),
+                         column.getTypeName());
+        }
+        ColumnConvert columnConvert = ColumnConvert.convertToColumnConvert(column.getTypeName());
+        String columnDdlSql = columnConvert.getConvertFunction().apply(column);
+        sb.append(columnDdlSql).append(StringUtils.SPACE);
         if (StringUtils.isNotEmpty(column.getDefaultValueExpression())) {
             sb.append(OpenGaussConstant.DEFAULT).append(StringUtils.SPACE).append(column.getDefaultValueExpression()).append(StringUtils.SPACE);
         }
