@@ -1,0 +1,39 @@
+create table "TEST_LONG"("ID" char(3) primary key ,"CONTENT" text);
+
+create table "TEST_LONGRAW"("ID" char(3) primary key, "CONTENT" BYTEA);
+
+create table "TEST_JSON_VARCHAR2"("ID" char(3) primary key,"CONTENT" json);
+
+create table "TEST_JSON_CLOB"("ID" char(3) primary key,"CONTENT" json);
+
+create table "XMLTEST3"( "NAME" varchar(32)  primary key, "ID" number, "DOC" xml ); 
+
+create table  "TEST_OBJECT"( "ID" char(3) primary key ,"CONTENT" JSON);
+
+create table "TEST_SDOGEOMETRY" ( "ID" NUMBER primary key , "CONTENT" JSON );
+
+create table "TEST_RAW"("ID" char(3)  primary key, "CONTENT" RAW);
+
+create table "TEST_ARRAY"("ID" int primary key,"NAME" varchar(20),"ARRAY_INT" json,"ARRAY_CHAR" json);
+
+create table "TEST_XDB"("ID" int primary key,"NAME" varchar(20),"WEB" json);
+
+create table "TEST_URI"("ID" int primary key,"NAME" varchar(20),"WEB" json);
+
+create table "TEST_HTTP"("ID" int primary key,"NAME" varchar(20),"WEB" json);
+
+create table "XMLTEST3"("NAME" varchar(32) primary key,"ID" NUMBER,"DOC" xml);
+
+delete from "TEST_LONGRAW";
+delete from "TEST_LONG";
+delete from "TEST_JSON_VARCHAR2";
+delete from "TEST_JSON_CLOB";
+delete from "XMLTEST3";
+delete from "TEST_OBJECT";
+delete from "TEST_SDOGEOMETRY";
+delete from "TEST_RAW";
+delete from "TEST_ARRAY";
+delete from "TEST_LONG";
+delete from "TEST_XDB";
+delete from "TEST_URI";
+delete from "TEST_HTTP";
