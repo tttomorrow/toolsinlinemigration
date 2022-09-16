@@ -1,0 +1,1 @@
+delete from land_parcels where feature_name = 'P2';

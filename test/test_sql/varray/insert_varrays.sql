@@ -1,0 +1,13 @@
+insert into test_array values (1,'array1',arrayInt(1,2,3,4,5),arrayChar('a','aa','aaa','aaaaa','aaaaa'));
+insert into test_array values (2,'array2',arrayInt(1,2,3,4),arrayChar('b','bb','bbb','bbbb'));
+insert into test_array values (3,'array3',arrayInt(1,2,3),arrayChar('c','cc','ccc'));
+insert into test_array values (4,'array4',arrayInt(1,2),arrayChar('d','dd'));
+insert into test_array values (5,'array5',arrayInt(1),arrayChar('e'));
+insert into test_array values (6,'array6',arrayInt(1),arrayChar('e'));
+insert into test_array values (7,'array6',arrayInt(),arrayChar());
+insert into test_array values (8,'array6',null,null);
+insert into test_array_uri values (9,'array9',null);
+insert into test_array_uri values (10,'array10',arrayUri(HTTPURITYPE.createURI('http://www.baidu.com')));
+insert into test_array_uri values (12,'array10',arrayUri(HTTPURITYPE.createURI('http://www.baidu.com'),HTTPURITYPE.createURI('http://www12345.com')));
+insert into test_array_uri values (11,'array11',arrayUri(XDBURITYPE.createURI('/public/hr/doc6.xml')));
+insert into test_array_uri values (13,'array10',arrayUri(XDBURITYPE.createURI('/public/hr/doc6.xml'),HTTPURITYPE.createURI('http://www12345.com')));
