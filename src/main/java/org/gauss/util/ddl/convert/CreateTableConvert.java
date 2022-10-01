@@ -57,7 +57,10 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         List<TableChangeStruct.UniqueColumn> uniqueColumns = tableChangeStruct.getTable().getUniqueColumns();
         List<String> uniqueColumnSqls = getUniqueColumnSqls(uniqueColumns);
 
-        List<String> checkColumnSqls = tableChangeStruct.getTable().getCheckColumns().stream().map(this::getCheckSql).collect(Collectors.toList());
+        List<String> checkColumnSqls = tableChangeStruct.getTable().getCheckColumns().stream()
+                .filter(checkcolumn-> !checkcolumn.getCondition().contains("IS JSON"))
+                .map(this::getCheckSql)
+                .collect(Collectors.toList());
 
         return getTableTitleSql(source) + OpenGaussConstant.BRACKETS_START + StringUtils.join(columnSqls, getColumnJoinStr()) +
                 (StringUtils.isNotEmpty(primaryKeySql) ? OpenGaussConstant.COMMA : StringUtils.EMPTY) + primaryKeySql +
@@ -185,6 +188,7 @@ public class CreateTableConvert extends BaseConvert implements DDLConvert {
         StringBuilder sb = new StringBuilder();
         sb.append(OpenGaussConstant.TAB);
         sb.append(wrapQuote(column.getName())).append(StringUtils.SPACE);
+        ColumnTypeConverter ColumnTypeConverter = new ColumnTypeConverter();
         String targetTypeName = ColumnTypeConverter.convertTypeName(column.getTypeName());
         if (null == targetTypeName) {
             logger.error("source column :{} type {} not support in openGauss yet! convert to character varying now ",

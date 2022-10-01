@@ -440,6 +440,7 @@ public class DDLSqlParser{
 
     private String getColumnSqls(TableChangeStruct.column column) {
         StringBuilder sb = new StringBuilder();
+        ColumnTypeConverter ColumnTypeConverter = new ColumnTypeConverter();
         sb.append(TAB);
         sb.append(addQuo(ColumnTypeConverter.convertTypeName(column.getName()))).append(StringUtils.SPACE);
         sb.append(column.getTypeName())

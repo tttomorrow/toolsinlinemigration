@@ -13,6 +13,7 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.sql.SQLException;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.List;
 
 public class JDBCExecutor {
@@ -73,6 +74,16 @@ public class JDBCExecutor {
                 logger.error("close statement error", e);
             }
         }
+    }
+
+    public ResultSet executeQuery (PreparedStatement statement) {
+        ResultSet rs = null;
+        try {
+            rs = statement.executeQuery();
+        } catch (SQLException exception) {
+            logger.error(exception.getMessage(), exception);
+        } 
+        return rs;   
     }
 
     public Connection getConnection() {

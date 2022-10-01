@@ -130,6 +130,7 @@ public class AlterTableColumnConvert extends BaseConvert implements DDLConvert {
 
     private String buildColumnSql(TableChangeStruct.column sourceColumn) {
         StringBuilder columnBuilder = new StringBuilder();
+        ColumnTypeConverter ColumnTypeConverter = new ColumnTypeConverter();
         columnBuilder.append(wrapQuote(sourceColumn.getName())).append(StringUtils.SPACE);
         String targetTypeName = ColumnTypeConverter.convertTypeName(sourceColumn.getTypeName());
         if (null == targetTypeName) {
