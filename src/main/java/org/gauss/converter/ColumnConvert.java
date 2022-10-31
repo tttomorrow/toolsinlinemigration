@@ -26,6 +26,7 @@ public enum ColumnConvert {
     DOUBLE_PRECISION("double precision"),
     BOOLEAN("boolean"),
     INTERVAL_YEAR_TO_MONTH("interval year to month"),
+    GEOMETRY("geometry"),
     NUMERIC("numeric", (sourceColumn) -> {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("numeric");
@@ -89,6 +90,7 @@ public enum ColumnConvert {
     }
 
     public static ColumnConvert convertToColumnConvert(String sourceTypeName) {
+        ColumnTypeConverter ColumnTypeConverter = new ColumnTypeConverter();
         return Arrays.stream(values())
                      .filter(each -> each.targetTypeName.equals(ColumnTypeConverter.convertTypeName(sourceTypeName)))
                      .findFirst()
